@@ -55,6 +55,8 @@ Getting a correct snooping-based protocol implemented, as well as LRU cache. Wri
 Simple write-back, write-allocate cache simulator with LRU
 ## Week 4/4-4/10:
 MSI snooping simulator
+
+4/6 PIN:https://software.intel.com/sites/landingpage/pintool/docs/98547/Pin/html/index.html#MAddressTrace
 ## Week 4/11-4/17:
 4/11: checkpoint 
 Integrate LRU cache with MSI together, try some basic read/ write inputs to test the validity of cache and MSI.
