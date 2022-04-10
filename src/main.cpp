@@ -1,8 +1,14 @@
+
 #include <bits/stdc++.h>
 #include "msi.h"
-//using namespace std;
+using namespace std;
+void test()
+{
+    Bus bus(8,30);
+    
+}
 int main(int argc, char ** argv)
 {
-    std::cout<<sizeof(Cacheline)<<std::endl;
+    test();
     return 0;
 }

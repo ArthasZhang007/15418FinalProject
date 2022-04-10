@@ -1,17 +1,62 @@
 #pragma once
-#include "consts.h"
-struct Cacheline
-{
-    bool dirty_bit;
-    State state;
-    void* tag;
-    char data[CachelineSize];
-};
+
+#include <list>
+#include <map>
 
 
-class Cache{
+template <typename Key, typename Value>
+class LRUCache {
+private:
+    void promote(typename std::list<std::pair<Key, Value> >::iterator it)
+    {
+        std::pair<Key, Value> pa = *it;
+        list_.erase(it);
+        list_.push_front(pa);
+        hash_map_[pa.first] = list_.begin();
+    }
 public:
-    Cache(int capacity);
-    Cacheline get(void* tag);
-    void put(void *tag, char* new_data);
+    LRUCache():cap(5){}
+    LRUCache(int capacity):cap(capacity){}
+
+    void resize(int capacity){cap = capacity;}
+    
+    Value get(Key key, bool create_new = false) {
+        auto it = hash_map_.find(key);
+        if(it == hash_map_.end())
+        {
+            auto def_val = Value();
+            if(create_new)put(key, def_val);
+            return def_val;
+        }
+        else 
+        {
+            auto ans = it->second->second;
+            promote(it->second);
+            return ans;
+        }
+    }
+
+    void put(Key key, Value value) {
+        auto it = hash_map_.find(key);
+        if(it == hash_map_.end())
+        {
+            if(hash_map_.size() == cap)
+            {
+                auto p = list_.back();
+                list_.pop_back();
+                hash_map_.erase(p.first);
+            }
+            list_.push_front(std::make_pair(key,value));
+            hash_map_[key] = list_.begin();
+        }
+        else
+        {
+            it->second->second = value;
+            promote(it->second);
+        }
+    }
+private:
+    std::list<std::pair<Key, Value> > list_;
+    std::unordered_map<Key, typename std::list<std::pair<Key, Value> >::iterator > hash_map_;
+    int cap;
 };
