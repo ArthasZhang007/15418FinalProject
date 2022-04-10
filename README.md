@@ -66,4 +66,28 @@ Write some basic parallel programs using pthreads or openMP and measure the numb
 Experiment and analyze our program with varying parameters like cache line size, cache capacity, thread number, and maybe with some parallel programs with complex data accessing patterns.
 4/29: report
 
+# Milestone Report
 
+## Work Done
+
+## Adjustment for Goals and Deliverables
+
+## Poster Session
+
+## Preliminary Results
+
+## Concerns
+
+# Final Report
+
+## Project Summary
+
+## Background and Workload 
+
+## System Design and Data Structures
+
+## Results 
+
+## References
+
+## Work Distribution
