@@ -1,0 +1,8 @@
+
+set(CMAKE_CXX_STANDARD 14)
+set(PROJECT_NAME snoop)
+set(SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+
+project(${PROJECT_NAME})
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
