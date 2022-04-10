@@ -24,7 +24,7 @@ public:
         auto it = hash_map_.find(key);
         if(it == hash_map_.end())
         {
-            auto def_val = Value();
+            auto def_val = Value(key);
             if(create_new)put(key, def_val);
             return def_val;
         }
@@ -55,8 +55,18 @@ public:
             promote(it->second);
         }
     }
-private:
+    
+
     std::list<std::pair<Key, Value> > list_;
     std::unordered_map<Key, typename std::list<std::pair<Key, Value> >::iterator > hash_map_;
     int cap;
 };
+
+template <typename Key, typename Value>
+std::ostream& operator <<(std::ostream &os, LRUCache<Key, Value> cache) {
+    for(auto &it : cache.hash_map_)
+    {
+        os<<(*it.second).second<<std::endl;
+    }
+    return os;
+}

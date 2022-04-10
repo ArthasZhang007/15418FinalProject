@@ -12,14 +12,15 @@ class Bus;
 
 struct BusTransaction{
     BusTransaction(){}
-    BusTransaction(void *cline, int thread_id, BusTsnType tsn_type) : 
-        tag(cline), tid(thread_id), tsn(tsn_type){}
+    BusTransaction(void *cline, int thread_id, BusTsnType tsn_type, int ct) : 
+        tag(cline), tid(thread_id), tsn(tsn_type), cnt(ct){}
     void* tag;
     int tid;
+    int cnt;
     BusTsnType tsn;
 };
 std::ostream& operator <<(std::ostream &os, BusTransaction bts) {
-    os<<" tid : "<<bts.tid<<" address : "<<bts.tag;
+    os<<"timestamp : "<<bts.cnt<<' '<< " tid : "<<bts.tid<<" address : "<<bts.tag;
     switch(bts.tsn)
     {
         case BusTsnType::BusRd:
@@ -37,9 +38,12 @@ class Processor
         Processor():bus(nullptr){}
         ~Processor(){} 
         void resize(int capacity){cache.resize(capacity);}  
-        void read(void *addr);
-        void write(void *addr);
+        void read(void *addr, int cnt);
+        void write(void *addr, int cnt);
+
+
         void pull_request(void *tag);
+        void wait_request(void *tag);
     LRUCache<void*, Cacheline> cache;
     Bus *bus;
     int tid;
@@ -70,35 +74,56 @@ class Bus{
 
             BusTsnType tsn_type;
             bool has_response = false;
+            
             switch (cline.state)
             {
-                case M : // modified
+                case State::M : // modified
                     break;
-                case S :
+                case State::S :
                     if(pr_request == PrTsnType::PrWr)
                     {
                         tsn_type = BusTsnType::BusRdX;
+                        cline.state = State::M;
                         has_response = true;
                     }
                     // do nothing for PrRd
                     break;
-                case I : 
-                    if(pr_request == PrTsnType::PrRd)tsn_type = BusTsnType::BusRd;
-                    if(pr_request == PrTsnType::PrWr)tsn_type = BusTsnType::BusRdX;
+                case State::I : 
+                    if(pr_request == PrTsnType::PrRd)
+                    {
+                        tsn_type = BusTsnType::BusRd;
+                        cline.state = State::S;
+                    }
+                    if(pr_request == PrTsnType::PrWr)
+                    {
+                        tsn_type = BusTsnType::BusRdX;
+                        cline.state = State::M;
+                    }
                     has_response = true;
                     break;
             }
-
+            //if(cline.state == State::M)std::cout<<"fuck\n";
+            processors[thread_id].cache.put(cline.tag, cline);
+            //std::cout<<processors[thread_id].cache<<std::endl;
             if(has_response)
             {
-                requests.push(BusTransaction(cline.tag, thread_id, tsn_type));
+                requests.push(BusTransaction(cline.tag, thread_id, tsn_type, cline.cnt));
             }
             
             bus_lock.unlock();
         }
         void process(BusTransaction request)
         {
-            std::cout<<request<<std::endl;
+            #pragma critical
+            {
+                std::cout<<request<<std::endl;
+                for(int i = 0; i < processors.size(); i++)
+                {
+                    auto &processor = processors[i];
+                    std::cout<<"processors : "<<i<<std::endl;
+                    std::cout<<processor.cache;
+                }
+            }
             //send requests to other machines
             for(int i = 0; i < processors.size(); i++)
             {
@@ -107,23 +132,12 @@ class Bus{
                     processors[i].requests[request.tag] = request;
                 }
             }
-            //waiting for all the request to be finished
-            while(true)
+            for(int i = 0; i < processors.size(); i++)
             {
-                bool finished = true;
-                for(int i = 0; i < processors.size(); i++)
+                if(i != request.tid)
                 {
-                    if(i != request.tid)
-                    {
-                        auto &rts = processors[i].requests;
-                        if(rts.find(request.tag) != rts.end())
-                        {
-                            finished = false;
-                            break;
-                        }
-                    }
-                } 
-                if(finished)break;
+                    processors[i].pull_request(request.tag);
+                }
             }
 
         }
@@ -156,7 +170,7 @@ void Processor::pull_request(void *tag)
         auto cline = cache.get(tag, false);
         switch(cline.state)
         {
-            case M:
+            case State::M:
                 if(tsn == BusTsnType::BusRd)
                 {
                     cline.state = State::S;
@@ -168,7 +182,7 @@ void Processor::pull_request(void *tag)
                     //flush
                 }
                 break;
-            case S:
+            case State::S:
                 if(tsn == BusTsnType::BusRd)
                 {
                     //no action
@@ -178,29 +192,36 @@ void Processor::pull_request(void *tag)
                     cline.state = State::I;
                 }
                 break;
-            case I:
+            case State::I:
                 // no action
                 break;
         }
+        cache.put(tag, cline);
         requests.erase(it);
     }
 }
-void Processor::read(void *addr)
+void Processor::wait_request(void *tag)
+{
+    while(requests.find(tag) != requests.end());
+}
+void Processor::read(void *addr, int cnt = 0)
 {
     void *tag = convert(addr);
-    pull_request(tag);
+    wait_request(tag);
     
-    auto cline = cache.get(addr, true);
+    auto cline = cache.get(tag, true);
+    cline.cnt = cnt;
 
     bus->push(cline, tid, PrTsnType::PrRd);
 
 }
-void Processor::write(void *addr)
+void Processor::write(void *addr, int cnt = 0)
 {
     void *tag = convert(addr);
-    pull_request(tag);
+    wait_request(tag);
     
-    auto cline = cache.get(addr, true);
+    auto cline = cache.get(tag, true);
+    cline.cnt = cnt;
     bus->push(cline, tid, PrTsnType::PrWr);
     cline.tag = tag;
     cache.put(addr, cline);

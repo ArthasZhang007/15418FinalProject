@@ -13,11 +13,12 @@ void* compute(void *args)
     it->mainloop();
     return nullptr;
 }
-void handle(Bus * bus, int tid, char type, void *addr)
+void handle(Bus * bus, int tid, char type, void *addr, int cnt)
 {
+    //std::cout<<bus->processors.size()<<' '<<tid<<std::endl;
     auto &processor = bus->processors[tid];
-    if(type == 'R')processor.read(addr);
-    if(type == 'W')processor.write(addr);
+    if(type == 'R')processor.read(addr, cnt);
+    if(type == 'W')processor.write(addr, cnt);
 }
 void execute()
 {
@@ -31,6 +32,7 @@ void execute()
 
 
     freopen(inputFilename, "r", stdin);
+    int cnt = 0;
     while(!std::cin.eof())
     {
         int tid;
@@ -42,8 +44,9 @@ void execute()
             addr_map[address] = base_ptr;
             base_ptr += 1024;
         }
-        std::cout<<tid<<' '<<type<<' '<<base_ptr<<std::endl;
-        handle(&bus, tid, type, addr_map[address]);
+        //std::cout<<tid<<' '<<type<<' '<<addr_map[address]<<std::endl;
+        handle(&bus, tid, type, addr_map[address], ++cnt);
+        //sleep(0.1);
     }
     pthread_join(pthread_id, NULL);
 }

@@ -5,7 +5,8 @@
 struct Cacheline
 {
     Cacheline():state(State::I){}
-    bool dirty_bit;
+    Cacheline(void *tg):tag(tg),state(State::I){}
+    int cnt;
     State state;
     void* tag;
     char data[CachelineSize];
@@ -13,13 +14,13 @@ struct Cacheline
 std::ostream& operator <<(std::ostream &os, Cacheline cline) {
     switch(cline.state)
     {
-        case 'M':
+        case State::M:
             os<<" Modified ";
             break;
-        case 'S':
+        case State::S:
             os<<" Shared   ";
             break;
-        case 'I':
+        case State::I:
             os<<" Invalid  ";
             break;
     }
