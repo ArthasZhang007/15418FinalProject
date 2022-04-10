@@ -1,0 +1,12 @@
+0 R X
+1 R X
+0 W X 
+0 W X 
+1 W X
+1 R X
+0 R X
+0 W X
+1 R X
+0 R Y
+0 W Y 
+1 W Y

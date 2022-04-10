@@ -18,6 +18,19 @@ struct BusTransaction{
     int tid;
     BusTsnType tsn;
 };
+std::ostream& operator <<(std::ostream &os, BusTransaction bts) {
+    os<<" tid : "<<bts.tid<<" address : "<<bts.tag;
+    switch(bts.tsn)
+    {
+        case BusTsnType::BusRd:
+            os<<" BusRd  ";
+            break;
+        case BusTsnType::BusRdX:
+            os<<" BusRdX ";
+            break;
+    }
+    return os;
+}
 class Processor
 {
     public:
@@ -85,6 +98,7 @@ class Bus{
         }
         void process(BusTransaction request)
         {
+            std::cout<<request<<std::endl;
             //send requests to other machines
             for(int i = 0; i < processors.size(); i++)
             {
