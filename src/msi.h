@@ -34,16 +34,15 @@ std::ostream& operator <<(std::ostream &os, BusTransaction bts) {
 }
 class Processor
 {
-    public:
-        Processor():bus(nullptr){}
-        ~Processor(){} 
-        void resize(int capacity){cache.resize(capacity);}  
-        void read(void *addr, int cnt);
-        void write(void *addr, int cnt);
+public:
+    Processor():bus(nullptr){}
+    ~Processor(){} 
+    void resize(int capacity){cache.resize(capacity);}  
+    void read(void *addr, int cnt);
+    void write(void *addr, int cnt);
 
-
-        void pull_request(void *tag);
-        void wait_request(void *tag);
+    void pull_request(void *tag);
+    void wait_request(void *tag);
     LRUCache<void*, Cacheline> cache;
     Bus *bus;
     int tid;
@@ -117,12 +116,7 @@ class Bus{
             #pragma critical
             {
                 std::cout<<request<<std::endl;
-                for(int i = 0; i < processors.size(); i++)
-                {
-                    auto &processor = processors[i];
-                    std::cout<<"processors : "<<i<<std::endl;
-                    std::cout<<processor.cache;
-                }
+
             }
             //send requests to other machines
             for(int i = 0; i < processors.size(); i++)
@@ -139,7 +133,15 @@ class Bus{
                     processors[i].pull_request(request.tag);
                 }
             }
-
+            #pragma critical
+            {
+                for(int i = 0; i < processors.size(); i++)
+                {
+                    auto &processor = processors[i];
+                    std::cout<<"processors : "<<i<<std::endl;
+                    std::cout<<processor.cache;
+                }
+            }
         }
     
 
@@ -222,7 +224,8 @@ void Processor::write(void *addr, int cnt = 0)
     
     auto cline = cache.get(tag, true);
     cline.cnt = cnt;
-    bus->push(cline, tid, PrTsnType::PrWr);
     cline.tag = tag;
     cache.put(addr, cline);
+    bus->push(cline, tid, PrTsnType::PrWr);
+
 }

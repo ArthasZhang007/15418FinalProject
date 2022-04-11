@@ -1,0 +1,84 @@
+timestamp : 1  tid : 0 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 2  tid : 1 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Shared   0x10000000
+
+timestamp : 3  tid : 0 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 5  tid : 1 address : 0x10000000 BusRdX 
+processors : 0
+ Invalid  0x10000000
+
+processors : 1
+ Modified 0x10000000
+
+timestamp : 7  tid : 0 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Shared   0x10000000
+
+timestamp : 8  tid : 0 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 9  tid : 1 address : 0x10000000 BusRd  
+processors : 0
+ Invalid  0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Shared   0x10000000
+
+timestamp : 10  tid : 0 address : 0x10000400 BusRd  
+processors : 0
+ Shared   0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000400
+
+ Shared   0x10000000
+
+timestamp : 11  tid : 0 address : 0x10000400 BusRdX 
+processors : 0
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000400
+
+ Shared   0x10000000
+
+timestamp : 12  tid : 1 address : 0x10000400 BusRdX 
+processors : 0
+ Invalid  0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Modified 0x10000400
+
+ Shared   0x10000000
+
