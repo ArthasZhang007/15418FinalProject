@@ -59,24 +59,64 @@ MSI snooping simulator
 4/6 PIN:https://software.intel.com/sites/landingpage/pintool/docs/98547/Pin/html/index.html#MAddressTrace
 ## Week 4/11-4/17:
 4/11: checkpoint 
+
 Integrate LRU cache with MSI together, try some basic read/ write inputs to test the validity of cache and MSI.
 ## Week 4/18-4/24:
 Write some basic parallel programs using pthreads or openMP and measure the number of cache misses, invalidations, and bus traffic.
 ## Week 4/25-5/1:
 Experiment and analyze our program with varying parameters like cache line size, cache capacity, thread number, and maybe with some parallel programs with complex data accessing patterns.
+
 4/29: report
 
 # Milestone Report
 
 ## Work Done
+We basically finished the MSI cache snooping simulator as well as the LRU Cache. The Cacheline size is determined at compile time while the number of cachelines per processor and the number of processors are given as command line arguments.
+We tested the correctness of our simulator on the example given in 11_coherence1.pptx slides 29, basically a sequence of write and read operations by different threads on different addresses.
+
+We also successfully use the Intel pin to generate a memory reference footprint trace of a very simple parallel program and make sure the length of trace scales sequentially with the complexity of the code by filtering register related memory traces, but we have not actually fed the trace into our snooping simulator yet.  
 
 ## Adjustment for Goals and Deliverables
+We are almost done with our 75% goal, which is implementing a snooping-based cache coherence protocol with LRU implementation for cache misses. The next step in our goals is to test our cache on both programs without false sharing and programs with false sharing. For the testing of these programs, we are going to focus on comparison between the numbers of invalidations. 
+
+We are on track of our goals, and will be working towards our 100% and 125% goals. 
 
 ## Poster Session
+We will be showing our sample input and output to help the audience understand our internal structure of simulator. Furthermore, we will have graphs that show the benchmarking results about the relations between parameters including cache line size, number of cache lines per processor, number of invalidations and flushes, and maybe implementation details including different protocols and different cache implementation decisions (such as write-back / write-through).
 
 ## Preliminary Results
+![Screen Shot 2022-04-11 at 5 01 21 PM](https://user-images.githubusercontent.com/53051688/162842802-2cbdda5d-3873-413a-b892-a90fa3c69ec7.jpg)
+
+The preliminary results for memory reference footprint traces are included in the samples folder, where two simple programs (one sequential and one parallel) are included, as well as their memory trace returned by PIN tools. 
+
+The sample input and output for the MSI simulator is in input.txt and output.txt in the root folder, 
+
+1 R X    represents thread 1 read on address X(0x10000000)
+
+0 W Y   represents thread 2 write on address Y(0x10000400)
+
+This represents at timestamp 11, a BusRdX on address 0x10000400 is caused by thread 0 and below are the local cache content in each processor. 
+
+timestamp : 11  tid : 0 address : 0x10000400 BusRdX 
+
+processors : 0
+
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+
+ Invalid  0x10000400
+
+ Shared   0x10000000
 
 ## Concerns
+The LRU cache in the MSI simulator does not hold the actual data for reading and writing. Therefore, if we want to evaluate the difference of write-back and write-through policy later, as well as the real efficiency of our simulator, we can not use the execution time as the benchmark but rather time-related tokens that are correlated to the time cost in real scenario like the number of bus transactions, invalidations, coherence miss, and flushes.
+
+Another concern is the concurrency issue, since the bus transaction queue is handled separately by another thread, there is some latency for the bus transaction. For instance, it is entirely possible that thread A PrWr on address X, then the bus issues a busRdX on X. However, thread B PrRd on address X in shared state after the PrWr of threadA but before the busRdX reaches thread B. We are still figuring out the solution to this problem.
+
+Last concern is about the proof of correctness. We can only test and debug the correctness of our simulator on a small sample by reasoning the process manually. However, on any large trace set there is no good way to test the correctness automatically and we can only judge by the trend.
 
 # Final Report
 
