@@ -1,0 +1,1 @@
+This folder contains some sample programs that can be inputted into our cache coherence protocol. The .out files are output memory reference trace from Intel PIN program. 

@@ -1,13 +1,15 @@
-mkdir build && cd build && cmake ..
+## mkdir build && cd build && cmake ..
 
-make -j8
+## make -j8
 
-./snoop {arguments}
+## ./snoop {arguments}
 
 
 
--f inputfilename
--n nthreads (default 1)
--i numberofCachelines per processors (default 30)
+## -f inputfilename
 
-./snoop -f ../input.txt -n 2 -i 30
+## -n nthreads (default 1)
+
+## -i numberofCachelines per processors (default 30)
+
+## ./snoop -f ../input.txt -n 2 -i 30
