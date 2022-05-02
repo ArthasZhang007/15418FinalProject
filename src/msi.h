@@ -19,6 +19,16 @@ struct BusTransaction{
     int cnt;
     BusTsnType tsn;
 };
+// read write trace
+struct Trace{
+    Trace(){}
+    Trace(void *cline, char typ, int ct) : 
+        tag(cline), type(typ), cnt(ct){}
+    void *tag;
+    char type;
+    int cnt;
+};
+
 std::ostream& operator <<(std::ostream &os, BusTransaction bts) {
     os<<"timestamp : "<<bts.cnt<<' '<< " tid : "<<bts.tid<<" address : "<<bts.tag;
     switch(bts.tsn)
@@ -37,6 +47,8 @@ class Processor
 public:
     Processor():bus(nullptr){}
     ~Processor(){} 
+    void mainloop();
+    void add_trace(Trace trace);
     void resize(int capacity){cache.resize(capacity);}  
     void read(void *addr, int cnt);
     void write(void *addr, int cnt);
@@ -47,10 +59,24 @@ public:
     Bus *bus;
     int tid;
     std::map<void*, BusTransaction> requests;
+    std::queue<Trace> traces;
+    std::mutex trace_lock;
 };
 
 class Bus{
     public:
+        Bus(int nthreads = 8, int NCachelines = 30)
+        {
+            processors.resize(nthreads);
+            for(int i = 0; i < nthreads; i++)
+            {
+                processors[i] = std::make_shared<Processor>();
+                processors[i]->resize(NCachelines);
+                processors[i]->bus = this;
+                processors[i]->tid = i;
+            }
+        }
+        ~Bus(){}
         void mainloop()
         {
             while(true)
@@ -102,7 +128,7 @@ class Bus{
                     break;
             }
             //if(cline.state == State::M)std::cout<<"fuck\n";
-            processors[thread_id].cache.put(cline.tag, cline);
+            processors[thread_id]->cache.put(cline.tag, cline);
             //std::cout<<processors[thread_id].cache<<std::endl;
             if(has_response)
             {
@@ -123,44 +149,33 @@ class Bus{
             {
                 if(i != request.tid)
                 {
-                    processors[i].requests[request.tag] = request;
+                    processors[i]->requests[request.tag] = request;
                 }
             }
             for(int i = 0; i < processors.size(); i++)
             {
                 if(i != request.tid)
                 {
-                    processors[i].pull_request(request.tag);
+                    processors[i]->pull_request(request.tag);
                 }
             }
             #pragma critical
             {
                 for(int i = 0; i < processors.size(); i++)
                 {
-                    auto &processor = processors[i];
+                    //auto &processor = processors[i];
                     std::cout<<"processors : "<<i<<std::endl;
-                    std::cout<<processor.cache;
+                    std::cout<<processors[i]->cache;
                 }
             }
         }
     
 
-    std::vector<Processor> processors;
+    std::vector<std::shared_ptr<Processor> > processors;
     std::queue<BusTransaction> requests;
     std::mutex bus_lock;
 
-    Bus(int nthreads = 8, int NCachelines = 30)
-    {
-        processors.resize(nthreads);
-        for(int i = 0; i < nthreads; i++)
-        {
-            auto &processor = processors[i];
-            processor.resize(NCachelines);
-            processor.bus = this;
-            processor.tid = i;
-        }
-    }
-    ~Bus(){}
+
 };
 //from remote to local
 void Processor::pull_request(void *tag)
@@ -228,4 +243,29 @@ void Processor::write(void *addr, int cnt = 0)
     cache.put(addr, cline);
     bus->push(cline, tid, PrTsnType::PrWr);
 
+}
+
+void Processor::add_trace(Trace trace)
+{
+    trace_lock.lock();
+    traces.push(trace);
+    trace_lock.unlock();
+}
+void Processor::mainloop()
+{
+    std::cout<<tid<<std::endl;
+    while(true) 
+    {
+        while(!traces.empty())
+        {
+            trace_lock.lock();
+
+            Trace q = traces.front();
+            traces.pop();
+            if(q.type == 'R') read(q.tag, q.cnt);
+            if(q.type == 'W') write(q.tag, q.cnt);
+            
+            trace_lock.unlock();
+        }
+    }
 }

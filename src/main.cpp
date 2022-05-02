@@ -7,48 +7,67 @@ using namespace std;
 char *inputFilename = NULL;
 int nthreads = 1;
 int NCachelines = 30;
-void* compute(void *args)
+
+void* bus_loop(void *args)
 {
-    Bus * it = (Bus *)(args);
-    it->mainloop();
+    Bus * bus = (Bus *)(args);
+    bus->mainloop();
     return nullptr;
 }
-void handle(Bus * bus, int tid, char type, void *addr, int cnt)
+void* processor_loop(void *args)
 {
-    //std::cout<<bus->processors.size()<<' '<<tid<<std::endl;
-    auto &processor = bus->processors[tid];
-    if(type == 'R')processor.read(addr, cnt);
-    if(type == 'W')processor.write(addr, cnt);
+    std::shared_ptr<Processor> processor = std::shared_ptr<Processor>((Processor *)args);
+    processor->mainloop();
+    return nullptr;
 }
 void execute()
 {
+    /* initialization of multithreading */
     Bus bus(nthreads, NCachelines);
-    pthread_t pthread_id;
+    std::vector<pthread_t> pthread_id(nthreads + 1);
+    pthread_create(&pthread_id[nthreads], nullptr, bus_loop, (void*)(&bus));
+    for(int i=0;i<nthreads;i++)
+    {
+        auto processor = bus.processors[i];
+        //std::cout<<i<<' '<<(&processor)<<' '<<processor.tid<<std::endl;
+        pthread_create(&pthread_id[i], nullptr, processor_loop, (void*)(processor.get()));
+    }
+        
+
+
+    /* initialization of file input and address*/
+    freopen(inputFilename, "r", stdin);
     std::map<std::string, void*> addr_map;
     void* base_ptr = (void *)0x10000000;
-
-
-    pthread_create(&pthread_id, nullptr, compute, (void*)(&bus));
-
-
-    freopen(inputFilename, "r", stdin);
+    
+    //main loop of inputing traces
     int cnt = 0;
     while(!std::cin.eof())
     {
         int tid;
         char type;
         std::string address;
+
         std::cin>>tid>>type>>address;
+        //std::cout<<tid<<' '<<type<<' '<<address<<std::endl;
         if(addr_map.find(address) == addr_map.end())
         {
             addr_map[address] = base_ptr;
             base_ptr += 1024;
         }
+        
         //std::cout<<tid<<' '<<type<<' '<<addr_map[address]<<std::endl;
-        handle(&bus, tid, type, addr_map[address], ++cnt);
+        bus.processors[tid]->add_trace(Trace(addr_map[address], type, ++cnt));
         //sleep(0.1);
     }
-    pthread_join(pthread_id, NULL);
+    
+    //std::cout<<"freak \n argument \n";
+    
+
+    /* waiting the thread to terminate (never) */
+    for(int i=0;i < nthreads + 1; i++)
+        pthread_join(pthread_id[i], NULL);
+    
 }
 int main(int argc, char ** argv)
 {
@@ -80,8 +99,9 @@ int main(int argc, char ** argv)
             break;
         }
     } while (opt != -1);
-
+    //std::cout<<inputFilename<<' '<<nthreads<<' '<<NCachelines<<std::endl;
+    
     execute();
-    std::cout<<inputFilename<<' '<<nthreads<<' '<<NCachelines<<std::endl;
+    
     return 0;
 }
