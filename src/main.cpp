@@ -20,21 +20,8 @@ void* processor_loop(void *args)
     processor->mainloop();
     return nullptr;
 }
-void execute()
+void inputloop(Bus &bus)
 {
-    /* initialization of multithreading */
-    Bus bus(nthreads, NCachelines);
-    std::vector<pthread_t> pthread_id(nthreads + 1);
-    pthread_create(&pthread_id[nthreads], nullptr, bus_loop, (void*)(&bus));
-    for(int i=0;i<nthreads;i++)
-    {
-        auto processor = bus.processors[i];
-        //std::cout<<i<<' '<<(&processor)<<' '<<processor.tid<<std::endl;
-        pthread_create(&pthread_id[i], nullptr, processor_loop, (void*)(processor.get()));
-    }
-        
-
-
     /* initialization of file input and address*/
     freopen(inputFilename, "r", stdin);
     std::map<std::string, void*> addr_map;
@@ -61,7 +48,28 @@ void execute()
         //sleep(0.1);
     }
     
-    //std::cout<<"freak \n argument \n";
+    sleep(3);
+    for(int i=0;i<nthreads;i++)
+    {
+        bus.processors[i]->print_stats();
+    }
+    exit(0);
+}
+void execute()
+{
+    /* initialization of multithreading */
+    Bus bus(nthreads, NCachelines);
+    std::vector<pthread_t> pthread_id(nthreads + 1);
+    pthread_create(&pthread_id[nthreads], nullptr, bus_loop, (void*)(&bus));
+    for(int i=0;i<nthreads;i++)
+    {
+        auto processor = bus.processors[i];
+        //std::cout<<i<<' '<<(&processor)<<' '<<processor.tid<<std::endl;
+        pthread_create(&pthread_id[i], nullptr, processor_loop, (void*)(processor.get()));
+    }
+
+
+    inputloop(bus);
     
 
     /* waiting the thread to terminate (never) */
@@ -69,7 +77,7 @@ void execute()
         pthread_join(pthread_id[i], NULL);
     
 }
-int main(int argc, char ** argv)
+int parse_command(int argc, char **argv)
 {
     if(argc < 2)
     {
@@ -99,8 +107,12 @@ int main(int argc, char ** argv)
             break;
         }
     } while (opt != -1);
+    return 0;
+}
+int main(int argc, char ** argv)
+{
+    parse_command(argc, argv); 
     //std::cout<<inputFilename<<' '<<nthreads<<' '<<NCachelines<<std::endl;
-    
     execute();
     
     return 0;

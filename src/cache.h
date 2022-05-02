@@ -15,8 +15,8 @@ private:
         hash_map_[pa.first] = list_.begin();
     }
 public:
-    LRUCache():cap(5){}
-    LRUCache(int capacity):cap(capacity){}
+    LRUCache():cap(5), cold_misses(0), capacity_misses(0){}
+    LRUCache(int capacity):cap(capacity), cold_misses(0), capacity_misses(0){}
 
     void resize(int capacity){cap = capacity;}
     
@@ -45,6 +45,11 @@ public:
                 auto p = list_.back();
                 list_.pop_back();
                 hash_map_.erase(p.first);
+
+                capacity_misses ++;
+            }
+            else {
+                cold_misses ++;
             }
             list_.push_front(std::make_pair(key,value));
             hash_map_[key] = list_.begin();
@@ -60,6 +65,8 @@ public:
     std::list<std::pair<Key, Value> > list_;
     std::unordered_map<Key, typename std::list<std::pair<Key, Value> >::iterator > hash_map_;
     int cap;
+    int cold_misses;
+    int capacity_misses;
 };
 
 template <typename Key, typename Value>
