@@ -1,4 +1,4 @@
-## Welcome to GitHub Pages
+## Snooping based Coherence Simulator
 
 You can use the [editor on GitHub](https://github.com/ArthasZhang007/15418FinalProject/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
 
