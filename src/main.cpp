@@ -92,10 +92,11 @@ void realloop(Bus &bus)
         //std::cout<<tid<<' '<<type<<' '<<addr_map[address]<<std::endl;
         //std::cout<<addr<<' '<<tid<<' '<<num_tids<<std::endl;
         bus.processors[tid]->add_trace(Trace(addr, type, ++cnt));
+        //std::cout<<cnt<<std::endl;
         //sleep(0.1);
     }
     
-    sleep(5);
+    sleep(2);
     MetaStat total;
     for(int i=0;i<nthreads;i++)
     {
@@ -132,7 +133,7 @@ void execute()
 
     freopen(inputFile.c_str(), "r", stdin);
     freopen(outputFile.c_str(), "w", stdout);
-    
+
     //inputloop(bus);
     realloop(bus);
     

@@ -297,7 +297,9 @@ void Bus::push(Cacheline cline, int thread_id, PrTsnType pr_request, bool is_new
             }
             if(!is_new)
             {
-                std::cout<<"coherence miss! by "<<thread_id<<std::endl; 
+#ifdef DEBUG
+    std::cout<<"coherence miss! by "<<thread_id<<std::endl; 
+#endif
                 processors[thread_id]->stat.coherence_misses++;
             }
             has_response = true;
