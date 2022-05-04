@@ -1,0 +1,8 @@
+cold misses : 1040
+capacity misses : 60640
+coherence misses : 0
+flush : 0
+
+total miss rate : 15.0134%
+coherence miss rate : 0%
+coherence miss percentage : 0%

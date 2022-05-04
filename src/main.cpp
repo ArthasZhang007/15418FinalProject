@@ -8,6 +8,10 @@ char *inputFilename = NULL;
 int nthreads = 1;
 int NCachelines = 30;
 
+string default_input_dir = "../samples";
+string default_output_dir = "../sampleoutput";
+
+
 void* bus_loop(void *args)
 {
     Bus * bus = (Bus *)(args);
@@ -123,7 +127,12 @@ void execute()
     }
 
 
-    freopen(inputFilename, "r", stdin);
+    std::string inputFile = default_input_dir + '/' + inputFilename;
+    std::string outputFile = default_output_dir + '/' + inputFilename;
+
+    freopen(inputFile.c_str(), "r", stdin);
+    freopen(outputFile.c_str(), "w", stdout);
+    
     //inputloop(bus);
     realloop(bus);
     

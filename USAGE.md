@@ -16,4 +16,10 @@
 
 ## make &&  ./snoop -f ../input.txt -n 2 -i 16 > output.txt
 
-## make && ./snoop -f pinatrace.out -n 129 -i 16 > cs_64.txt
+## make && ./snoop -f ../samples/thread64.out -n 65 -i 16 > ../sampleoutput/thread64.txt
+
+# New version
+## rm -rf build && mkdir build && cd build 
+## cmake ..
+
+## make && ./snoop -f thread64.out -n 65 -i 16 
