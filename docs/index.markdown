@@ -1,3 +1,4 @@
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
 # Snooping Based Coherence Simulator
 
 In this project, we implement a software simulator of the Snooping Based Coherence Protocol with the basic MSI state transitions. We test the correctness of our program on the ghc77 machines using the examples from the 418 lecture first to make sure the simulator is sequentially consistent, then benchmark our simulator with programs that have different memory access patterns. Our final deliverables include graphs and analysis between the relationship among several important independent variables and dependent variables. The final trend fits our 
@@ -9,7 +10,50 @@ In computer architecture, cache coherence is the uniformity of shared resource d
 
 ## Key Data Structures 
 
+### Cacheline 
+
+```
+struct Cacheline
+{
+    Cacheline():tag(nullptr), state(State::I){}
+    Cacheline(void *tg):tag(tg),state(State::I){}
+    int cnt;
+    State state;
+    void* tag;
+    //char data[CachelineSize];
+};
+```
+
+```cnt``` is actually the timestamp of the operation in the trace. For instance, 
+```cnt = 5``` means that is the 5th row from the memory trace input. This 
+is for debugging and collecting statistics only.
+
+```tag ``` is the address of this cacheline
+
+```State``` M = Modified, S = Shared, I = Invalid
+
+```data[CachelineSize]``` stores the actual content of the cacheline. We do not need 
+it since our simulator does not involve real data transfers. 
+
+Notice that CachelineSize is determined at compile time.
+
 ### LRU Cache 
+
+The LRU Cache is a polymorphic. The key is the ```void *``` type, which indicates the 64 bits memory address, the value is simply the corresponding cacheline for this address. 
+
+Lookup API:
+
+```Value get(Key key, bool create_new = false)```
+
+create_new means that if the entry is not in the cache, create a new one.
+
+Insert API:
+
+```void put(Key key, Value value)```
+
+
+Lookup(Get) and Insert(Put) is $$O(1)$$, implemented using a linked list and hash table. The Cache is also responsible for counting the number of cold misses 
+and capacity misses. If a get/put does not find entry in the cache, that is a cold miss, if a put evicts an entry, that is a capacity miss.
 
 ### Processor Abstraction 
 
@@ -17,12 +61,15 @@ In computer architecture, cache coherence is the uniformity of shared resource d
 
 # Approach
 
+### Cacheline Mapping 
+
+
 ### Intel Pin Tools
 ### Parallelism 
  pthread
 ### Statistics Collecting Methods
 
-###
+
 
 # Results
 
