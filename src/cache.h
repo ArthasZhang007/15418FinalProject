@@ -19,20 +19,50 @@ public:
     LRUCache(int capacity):cap(capacity), cold_misses(0), capacity_misses(0){}
 
     void resize(int capacity){cap = capacity;}
-    
+    template <typename T>
+    bool checkin(typename std::list<T>::iterator it, std::list<T> ls)
+    {
+        for(auto i = ls.begin(); i != ls.end(); i++)if(it == i)return true;
+        return false;
+    }
+    template <typename T>
+    bool checklast(typename std::list<T>::iterator it, std::list<T> ls)
+    {
+        for(auto i = ls.begin(); i != ls.end();)
+        {
+            auto last = i;
+
+            i++;
+            if(i == ls.end())
+            {
+                return it == last;
+            }
+        }
+    }
     Value get(Key key, bool create_new = false) {
         auto it = hash_map_.find(key);
+        auto def_val = Value(key);
         if(it == hash_map_.end())
         {
-            auto def_val = Value(key);
-            if(create_new)put(key, def_val);
-            return def_val;
+            
+            if(create_new)
+            {
+                put(key, def_val);
+                return def_val;
+            }
+            return Value();
         }
         else 
         {
-            auto ans = it->second->second;
-            promote(it->second);
-            return ans;
+            auto pair = *(it->second);
+            
+            if(it->second != list_.end())
+            {
+                auto ans = it->second->second;
+                promote(it->second);
+                return ans;
+            }
+            return Value();
         }
     }
 
@@ -43,8 +73,10 @@ public:
             if(hash_map_.size() == cap)
             {
                 auto p = list_.back();
-                list_.pop_back();
+                //assert(checklast(hash_map_[p.first],list_));
                 hash_map_.erase(p.first);
+                list_.pop_back();
+                
 
                 capacity_misses ++;
             }

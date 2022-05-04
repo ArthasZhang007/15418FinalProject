@@ -4,12 +4,12 @@
 
 struct Cacheline
 {
-    Cacheline():state(State::I){}
+    Cacheline():tag(nullptr), state(State::I){}
     Cacheline(void *tg):tag(tg),state(State::I){}
     int cnt;
     State state;
     void* tag;
-    char data[CachelineSize];
+    //char data[CachelineSize];
 };
 std::ostream& operator <<(std::ostream &os, Cacheline cline) {
     switch(cline.state)

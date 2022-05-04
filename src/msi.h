@@ -6,6 +6,7 @@
 #include <mutex>
 #include "cacheline.h"
 #include "cache.h"
+//#define DEBUG
 #define convert(x) (void*)((long long)(addr) / CachelineSize * CachelineSize)
 class Processor;
 class Bus;
@@ -29,6 +30,29 @@ struct Trace{
     int cnt;
 };
 
+struct MetaStat{
+    MetaStat() : cold_misses(0), capacity_misses(0), coherence_misses(0), flushes(0){}
+    int cold_misses;
+    int capacity_misses;
+    int coherence_misses;
+    int flushes;
+    friend MetaStat operator + (MetaStat a, MetaStat b)
+    {
+        MetaStat s;
+        s.cold_misses = a.cold_misses + b.cold_misses;
+        s.capacity_misses = a.capacity_misses + b.capacity_misses;
+        s.coherence_misses = a.coherence_misses + b.coherence_misses;
+        s.flushes = a.flushes + b.flushes;
+        return s;
+    }
+};
+std::ostream& operator <<(std::ostream &os, MetaStat s) {
+    os<<"cold misses : "<< s.cold_misses<<std::endl;
+    os<<"capacity misses : " << s.capacity_misses<<std::endl;
+    os<<"coherence misses : " << s.coherence_misses<<std::endl;
+    os<<"flush : " << s.flushes<<std::endl;
+    return os;
+}
 std::ostream& operator <<(std::ostream &os, BusTransaction bts) {
     os<<"timestamp : "<<bts.cnt<<' '<< " tid : "<<bts.tid<<" address : "<<bts.tag;
     switch(bts.tsn)
@@ -45,29 +69,26 @@ std::ostream& operator <<(std::ostream &os, BusTransaction bts) {
 class Processor
 {
 public:
-    Processor():bus(nullptr){
-        cold_misses = 0;
-        capacity_misses = 0;
-        coherence_misses = 0;
-        flushes = 0;
-    }
+    Processor():bus(nullptr), stat(){}
     ~Processor(){} 
     void mainloop();
     void add_trace(Trace trace);
     void resize(int capacity){cache.resize(capacity);}  
     void read(void *addr, int cnt);
     void write(void *addr, int cnt);
-    void pull_request(void *tag); // from the bus
+    void pull_request(); // from the bus
     void wait_request(void *tag); // on the bus
 
     void flush(void *tag);// flush from cache to memory
+    void push_stats()
+    {
+        stat.cold_misses = cache.cold_misses;
+        stat.capacity_misses = cache.capacity_misses;
+    }
     void print_stats()
     {
         std::cout<<"-----Processor "<<tid<<"-----"<<std::endl;
-        std::cout<<"cold misses : "<< cache.cold_misses<<std::endl;
-        std::cout<<"capacity misses : " << cache.capacity_misses<<std::endl;
-        std::cout<<"coherence misses : " << coherence_misses<<std::endl;
-        std::cout<<"flush : " << flushes<<std::endl;
+        std::cout<<stat;
         std::cout<<"-----Processor "<<tid<<"-----"<<std::endl;
     }
 
@@ -75,16 +96,15 @@ public:
     LRUCache<void*, Cacheline> cache;
     Bus *bus;
     int tid;
-    std::map<void*, BusTransaction> requests;
+    std::queue<BusTransaction> requests;
+    //std::map<void*, BusTransaction> requests;
     std::queue<Trace> traces;
     std::mutex trace_lock;
+    std::mutex request_lock;
 
 
     /*benchmarking stats*/
-    int cold_misses;
-    int capacity_misses;
-    int coherence_misses;
-    int flushes;
+    MetaStat stat;
 };
 
 class Bus{
@@ -104,7 +124,7 @@ public:
     void mainloop();
 
     // push a PrRd/PrWr from processor t for address c
-    void push(Cacheline cline, int thread_id, PrTsnType pr_request);
+    void push(Cacheline cline, int thread_id, PrTsnType pr_request, bool is_new);
     // send a BusRd/RdX to the target processors
     void process(BusTransaction request);
 
@@ -117,73 +137,82 @@ public:
 };
 void Processor::flush(void *tag)
 {
-    flushes++;
+    stat.flushes++;
 }
 //from remote bus to local
-void Processor::pull_request(void *tag)
+void Processor::pull_request()
 {
-    auto it = requests.find(tag);
-    if(it != requests.end())
+    request_lock.lock();
+    while(!requests.empty())
     {
-        auto tsn = it->second.tsn;
+        auto request = requests.front();
+        requests.pop();
+        auto tsn = request.tsn;
+        auto tag = request.tag;
         auto cline = cache.get(tag, false);
-        switch(cline.state)
+        if(cline.tag != nullptr)
         {
-            case State::M:
-                if(tsn == BusTsnType::BusRd)
-                {
-                    cline.state = State::S;
-                    flush(tag);
-                }
-                if(tsn == BusTsnType::BusRdX)
-                {
-                    cline.state = State::I;
-                    flush(tag);
-                }
-                break;
-            case State::S:
-                if(tsn == BusTsnType::BusRd)
-                {
-                    //no action
-                }
-                if(tsn == BusTsnType::BusRdX)
-                {
-                    cline.state = State::I;
-                }
-                break;
-            case State::I:
-                // no action
-                break;
+            switch(cline.state)
+            {
+                case State::M:
+                    if(tsn == BusTsnType::BusRd)
+                    {
+                        cline.state = State::S;
+                        flush(tag);
+                    }
+                    if(tsn == BusTsnType::BusRdX)
+                    {
+                        //std::cout<<"invalidate M\n";
+                        cline.state = State::I;
+                        flush(tag);
+                    }
+                    break;
+                case State::S:
+                    if(tsn == BusTsnType::BusRd)
+                    {
+                        //no action
+                    }
+                    if(tsn == BusTsnType::BusRdX)
+                    {
+                        //std::cout<<"invalidate S\n";
+                        cline.state = State::I;
+                    }
+                    break;
+                case State::I:
+                    // no action
+                    break;
+            }
+            cache.put(tag, cline);
         }
-        cache.put(tag, cline);
-        requests.erase(it);
     }
-}
-void Processor::wait_request(void *tag)
-{
-    while(requests.find(tag) != requests.end());
+    request_lock.unlock();   
 }
 void Processor::read(void *addr, int cnt = 0)
 {
     void *tag = convert(addr);
-    wait_request(tag);
+    pull_request();
+    //wait_request(tag);
     
+    auto res = cache.get(tag, false);
+
     auto cline = cache.get(tag, true);
     cline.cnt = cnt;
 
-    bus->push(cline, tid, PrTsnType::PrRd);
+    bus->push(cline, tid, PrTsnType::PrRd, res.tag == nullptr);
 
 }
 void Processor::write(void *addr, int cnt = 0)
 {
     void *tag = convert(addr);
-    wait_request(tag);
-    
+    pull_request();
+    //wait_request(tag);
+    auto res = cache.get(tag, false);
+
     auto cline = cache.get(tag, true);
     cline.cnt = cnt;
     cline.tag = tag;
     cache.put(addr, cline);
-    bus->push(cline, tid, PrTsnType::PrWr);
+    bus->push(cline, tid, PrTsnType::PrWr, res.tag == nullptr);
 
 }
 
@@ -231,13 +260,17 @@ void Bus::mainloop()
     }
 }
 
-void Bus::push(Cacheline cline, int thread_id, PrTsnType pr_request)
+void Bus::push(Cacheline cline, int thread_id, PrTsnType pr_request, bool is_new)
 {
     bus_lock.lock();
 
     BusTsnType tsn_type;
     bool has_response = false;
     
+    /*if(is_new == false)
+    {
+        std::cout<<cline.state<<" freak\n";
+    }*/
     switch (cline.state)
     {
         case State::M : // modified
@@ -262,7 +295,11 @@ void Bus::push(Cacheline cline, int thread_id, PrTsnType pr_request)
                 tsn_type = BusTsnType::BusRdX;
                 cline.state = State::M;
             }
-            processors[thread_id]->coherence_misses++;
+            if(!is_new)
+            {
+                std::cout<<"coherence miss! by "<<thread_id<<std::endl; 
+                processors[thread_id]->stat.coherence_misses++;
+            }
             has_response = true;
             break;
     }
@@ -279,25 +316,23 @@ void Bus::push(Cacheline cline, int thread_id, PrTsnType pr_request)
 
 void Bus::process(BusTransaction request)
 {
+#ifdef DEBUG
     #pragma critical
     {
         std::cout<<request<<std::endl;
     }
+#endif
     //send requests to other machines
     for(int i = 0; i < processors.size(); i++)
     {
         if(i != request.tid)
         {
-            processors[i]->requests[request.tag] = request;
+            processors[i]->request_lock.lock();
+            processors[i]->requests.push(request);
+            processors[i]->request_lock.unlock();
         }
     }
-    for(int i = 0; i < processors.size(); i++)
-    {
-        if(i != request.tid)
-        {
-            processors[i]->pull_request(request.tag);
-        }
-    }
+#ifdef DEBUG
     #pragma critical
     {
         for(int i = 0; i < processors.size(); i++)
@@ -306,4 +341,5 @@ void Bus::process(BusTransaction request)
             std::cout<<processors[i]->cache;
         }
     }
+#endif
 }

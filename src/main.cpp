@@ -20,10 +20,15 @@ void* processor_loop(void *args)
     processor->mainloop();
     return nullptr;
 }
+void sample_in(int *tid, char *type, std::string * address)
+{
+    std::cin>>(*tid)>>(*type)>>(*address);
+}
+
 void inputloop(Bus &bus)
 {
     /* initialization of file input and address*/
-    freopen(inputFilename, "r", stdin);
+    
     std::map<std::string, void*> addr_map;
     void* base_ptr = (void *)0x10000000;
     
@@ -31,12 +36,9 @@ void inputloop(Bus &bus)
     int cnt = 0;
     while(!std::cin.eof())
     {
-        int tid;
-        char type;
-        std::string address;
+        int tid; char type; std::string address;
+        sample_in(&tid, &type, &address);
 
-        std::cin>>tid>>type>>address;
-        //std::cout<<tid<<' '<<type<<' '<<address<<std::endl;
         if(addr_map.find(address) == addr_map.end())
         {
             addr_map[address] = base_ptr;
@@ -51,10 +53,62 @@ void inputloop(Bus &bus)
     sleep(3);
     for(int i=0;i<nthreads;i++)
     {
+        bus.processors[i]->push_stats();
         bus.processors[i]->print_stats();
     }
     exit(0);
 }
+
+
+void realloop(Bus &bus)
+{
+    /* initialization of file input and address*/
+    
+    std::unordered_map<int, int> tid_map;
+    std::vector<int> anti_map;
+    int num_tids = 0; 
+    int cnt = 0;
+    while(!std::cin.eof())
+    {
+        //int tid; char type; std::string address;
+        //sample_in(&tid, &type, &address);
+        void *addr;char type;int thread_rid;
+        std::string waste;
+        //std::string addr;
+        std::cin>>addr>>type>>type>>addr>>waste>>waste>>thread_rid;
+
+        if(tid_map.find(thread_rid) == tid_map.end())
+        {
+            tid_map[thread_rid] = num_tids;
+            anti_map.push_back(thread_rid);
+            num_tids ++;
+        }
+        int tid = tid_map[thread_rid];
+        //std::cout<<addr<<' '<<type<<' '<<thread_rid<<std::endl;
+        //std::cout<<tid<<' '<<type<<' '<<addr_map[address]<<std::endl;
+        //std::cout<<addr<<' '<<tid<<' '<<num_tids<<std::endl;
+        bus.processors[tid]->add_trace(Trace(addr, type, ++cnt));
+        //sleep(0.1);
+    }
+    
+    sleep(5);
+    MetaStat total;
+    for(int i=0;i<nthreads;i++)
+    {
+        bus.processors[i]->push_stats();
+        total = total + bus.processors[i]->stat;
+        //bus.processors[i]->print_stats();
+    }
+    int sum = total.cold_misses + total.capacity_misses + total.coherence_misses;
+    std::cout<<total<<std::endl;
+    std::cout<<"total miss rate : "<< (double)sum/cnt*100<<"%\n";
+    std::cout<<"coherence miss rate : "<< (double)total.coherence_misses/cnt*100<<"%\n";
+    std::cout<<"coherence miss percentage : "<<(double)total.coherence_misses/sum*100<<"%\n";
+    
+    
+    exit(0);
+}
+
 void execute()
 {
     /* initialization of multithreading */
@@ -69,7 +123,9 @@ void execute()
     }
 
 
-    inputloop(bus);
+    freopen(inputFilename, "r", stdin);
+    //inputloop(bus);
+    realloop(bus);
     
 
     /* waiting the thread to terminate (never) */
