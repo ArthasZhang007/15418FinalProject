@@ -57,18 +57,135 @@ and capacity misses. If a get/put does not find entry in the cache, that is a co
 
 ### Processor Abstraction 
 
+```
+class Processor
+{
+public:
+    Processor():bus(nullptr), stat(){}
+    ~Processor(){} 
+    void mainloop();
 
+    void add_trace(Trace trace); // resize LRU cache
+    void resize(int capacity){cache.resize(capacity);} 
+    
+    // read and write at address with timestamp cnt 
+    void read(void *addr, int cnt);
+    void write(void *addr, int cnt);
+    void pull_request(); // handle the bus transactions from the request queue
+    void flush(void *tag);// flush from cache to memory
+    LRUCache<void*, Cacheline> cache;
+    Bus *bus;
+    int tid; // thread id 
+    std::queue<BusTransaction> requests; // request queue
+    std::queue<Trace> traces; // the trace(read/write at address x) queue
+    // concurrent locks
+    std::mutex trace_lock;
+    std::mutex request_lock;
+}
+```
 
 ### Bus Abstraction
+```
+class Bus
+{
+public:
+    void mainloop();
+
+    // push a PrRd/PrWr from processor t for Cacheline c
+    void push(Cacheline cline, int thread_id, PrTsnType pr_request, bool is_new);
+
+    // send a BusRd/RdX to the target processors
+    void process(BusTransaction request);
+
+    std::vector<std::shared_ptr<Processor> > processors;
+
+    // shared request queue
+    std::queue<BusTransaction> requests;
+    // bus lock for concurrency
+    std::mutex bus_lock;
+};
+```
+
 
 # Approach
 
+## Real Process Overview
+
+### 1. Program ==> Trace
+(Interleave access of 64 threads on array length of 256)
+```
+void *thread(void *cur_args) {
+    
+    args *casted = (args*)cur_args;
+    for (int i = 0; i < 4; i++){
+        casted->arr[casted->tid + i * 64] += 1;
+    }
+
+    pthread_exit(NULL);
+}
+```
+==>
+```
+0x400c58: W 0x7fff1c83cfc0; TID: 31527
+0x400c66: W 0x7fff1c83cfb8; TID: 31527
+0x400c1b: W 0x7fff1c83cfb0; TID: 31527
+0x400c23: W 0x7fff1c83cfac; TID: 31527
+0x400c26: W 0x7fff1c83cfa8; TID: 31527
+0x400c29: R 0x7fff1c83cfac; TID: 31527
+0x400c2f: R 0x7fff1c83cfa8; TID: 31527
+0x400c3d: W 0x7fff1c83cf98; TID: 31527
+0x400830: R 0x602030; TID: 31527
+0x400836: W 0x7fff1c83cf90; TID: 31527
+0x4007f0: R 0x602008; TID: 31527
+0x4007f0: W 0x7fff1c83cf88; TID: 31527
+0x4007f6: R 0x602010; TID: 31527
+...
+```
+### 2. Create Bus and Processors in Separate Threads
+Let us say the original program has n threads, then we need n+1 threads in total.
+These threads call mainloop() that actively checks if their queues are empty.
+If they are not, pull out a request and start to handle the request.
+Processors have two queues, one is the trace queue and another is the bustransaction
+queue.
+
+Bus only has a bustransaction queue. Whenever there are any operations on the queue,
+mutex locks are applied to avoid concurrent faults. 
+
+
+### 3. Feed Trace to Processors Queue 
+```
+bus.processors[tid]->add_trace(Trace(addr, rw_type, ++cnt));
+```
+Notice the inqueue time is in sequential order since the we can not read the trace file in parallel. However, since each processor is in separate thread, the actual processing of the requests among the processors are not necessarily obeying the 
+sequential trace order. The order inside each processor is still correct since the queue is FIFO. We believe that, within our range of abilities, this is the most accurate presentation of the data access pattern in real applications.
+
+### 4. Processor Read and Write
+
+Before any other actions, processor locks the bustransaction queue and handle the 
+bus transactions(originated in other processors) first until the bus transaction queue is empty. 
+
+This process followed
+the MSI diagram. 
+A ```BusRd``` makes the state to change from Modified to Shared, ```BusRdX``` may make some cacheline invalid, etc. 
+
+Then, the processor updates its local LRU Cache accordingly.
+
+Finally, the processor calles the Bus to push ```PrRd``` or ```PrWr``` on to the bus transaction queue of the Bus. The Bus will obtain a bus lock on the queue, generates corresponding Bus transaction, and sends the transaction to every other processor. The other processors must handle all the bus transactions in their queue, in the very beginning of the next read or write operations as described in the first paragraph of this section.
+## Other Side Details
 ### Cacheline Mapping 
+```#define convert(x) (void*)((long long)(addr) / CachelineSize * CachelineSize)```
+
+For instance, let us say the cacheline size is 16 bit. 
+Then address from 64 to 79 will be mapped to 64 and they will be in the same 
+cacheline.
+
 
 
 ### Intel Pin Tools
-### Parallelism 
- pthread
+
+### The Real Parallelism 
+ We use posix thread for parallelism.
+
 ### Statistics Collecting Methods
 
 
