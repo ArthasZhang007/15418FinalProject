@@ -138,6 +138,7 @@ void *thread(void *cur_args) {
 0x4007f0: R 0x602008; TID: 31527
 0x4007f0: W 0x7fff1c83cf88; TID: 31527
 0x4007f6: R 0x602010; TID: 31527
+(Instruction Address) : Read/Write (Memory Address), Thread ID
 ...
 ```
 ### 2. Create Bus and Processors in Separate Threads
@@ -182,8 +183,8 @@ cacheline.
 
 ### Intel Pin Tools
 
-### The Real Parallelism 
- We use posix thread for parallelism.
+### Parallelism 
+ We use posix thread(pthread) for both the input program and the MSI simulator. The process is just creating different pthreads using `pthread_create` in the beginning and waiting them to join in the end.
 
 
 
