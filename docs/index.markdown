@@ -52,8 +52,7 @@ Insert API:
 ```void put(Key key, Value value)```
 
 
-Lookup(Get) and Insert(Put) is $$O(1)$$, implemented using a linked list and hash table. The Cache is also responsible for counting the number of cold misses 
-and capacity misses. If a get/put does not find entry in the cache, that is a cold miss, if a put evicts an entry, that is a capacity miss.
+Lookup(Get) and Insert(Put) is $$O(1)$$, implemented using a linked list and hash table. 
 
 ### Processor Abstraction 
 
@@ -186,26 +185,60 @@ cacheline.
 ### The Real Parallelism 
  We use posix thread for parallelism.
 
-### Statistics Collecting Methods
+
 
 
 
 # Results
 
-# Conclusion && Reference
+There are so many independent and dependent variables availble for our cache simulator, hence we only selected some of interest.
+
+## Dependent variables 
+### number of cold misses 
+Measured in LRU Cache.
+If a lookup does not find entry in the cache, that is a cold miss. 
+### number of capacity misses 
+Measured in LRU Cache.
+If an insert evicts an entry, that is a capacity miss.
+### number of coherence misses 
+Measured in ```bus::push()```
+
+A coherence misses whenever a cacheline changes from invalid state to 
+shared or modified state, AND the cacheline is not new to the cache, because there are implicit and temporal invalid start state for cachelines that the cache does not have.
+
+### number of flushes 
+Measured in ```processor::pull_request()```
+
+A flush happenes whenever a cacheline changes from modified state to the 
+shared or invalid state. This is kind of the opposite from coherence miss.
+
+## Independent variables 
+
+### Number of Processors(Threads)
+
+Range from 2 to 64. Since in Snooping-Based Caching, communication complexity scales squarely with the number of threads. 64 is a realistic and feasible upperbound for us.
+
+### Number of Cachelines
+How big a cache in a single processor is? This affects the number of cold and capacity misses most.
+### The Cacheline size
+How many bytes a cacheline has? Our defaults and center point is 64 bytes.
+
+### The Original Program itself
+How big is the array? What is the intensity of contentions in our program?
+What is the data access pattern? Block or Interleave, or more complex pattern?
+
+## Configurations && Graphs
+
+# Reference
+
+- Intel Pin User Guide (https://software.intel.com/sites/landingpage/pintool/docs/98547/Pin/html/index.html#MAddressTrace)
+- 
+## 
 
 # Contribution of Works
 
-### Markdown
+50%(Lingxi) - 50%(xwu3)   ? 
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
 
 - Bulleted
 - List
