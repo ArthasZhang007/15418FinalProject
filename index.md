@@ -348,28 +348,58 @@ What is the data access pattern? Block or Interleave, or more complex pattern?
 ## Experiments Configurations && Graphs
 Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.
 
+### Experiment 1
+For our first experiment with our independent variable, we increment the cache line size by a factor of 2 everytime while keeping the total size of the cache to be fixed, which is 32KB.
 
-For our first experiment with our independent variable, we altered the 
+In the following two graphs, we record the changes in number of coherences misses and flushes as we increase the cache line size from 8 bytes to 1024 bytes for two different data access pattern, blocked and interleaving. 
+
+Since the total cache size is fixed, as the cache line size increases, the number of cache lines decrease in correspondence. For example, when the cache line increases from 8 bytes to 16 bytes, the number of cache lines decrease from 4096 to 2048.
+
 <p align="center">
 <img src="x=cache_line_v_coh_flush_block.png" width="75%" height="75%" >
 </p>
-
-
-
-<p align="center">
-<img src="x=cache_line_v_cold_capacity_block.png" width="75%" height="75%" >
-</p>
+<em> <sub> figure 1. Under blocked data access, number of coherence misses and flushes vs. cache line size in fixed cache size </sub> </em>
 
 <p align="center">
 <img src="x=cache_line_v_coh_flush_interleave.png" width="75%" height="75%" >
 </p>
+<em> <sub> figure 2. Under interleaving data access, number of coherence misses and flushes vs. cache line size in fixed cache size </sub> </em>
+
+The first observation is that as the cache line size increases and the number of cache line decreases, the total number of flushes also decrease. Since the number of cache lines decreases, there are less opportunities for flushes to occur.
+
+The second observation is that although the total number of flushes is decreasing, it is obvious that the first derivation (the speed of decreasing) is decreasing as well. This is due to __________________________________________
+
+The third observation is that under interleaving data access, when the cache line size is small, the number of flushes is almost tripled the amount of number of flushes under blocked data access. Under the interleaving data access pattern, multiple threads could be trying to access (read or write) the same cache line. Therefor the number of flushes for interleaving pattern is much higher than that of blocked pattern. 
+
+This phenomenon diminishes as the cache line size increases, because now under interleaving pattern, the same thread can access more than one element from the array before invalidation (therefore flushes) happens. 
+
+<br>
+
+In the following two graphs, we record the changes in cold and capacity misses as we increase the cache line size from 8 bytes to 1024 bytes for two different data access pattern, blocked and interleaving.
+
+<p align="center">
+<img src="x=cache_line_v_cold_capacity_block.png" width="75%" height="75%" >
+</p>
+<em> <sub> figure 3. Under blocked data access, number of cold and capacity misses vs. cache line size in fixed cache size </sub> </em>
 
 <p align="center">
 <img src="x=cache_line_v_cold_capacity_interleave.png" width="75%" height="75%" >
 </p>
+<em> <sub> figure 4. Under interleaving data access, number of cold and capacity misses vs. cache line size in fixed cache size </sub> </em>
 
+The first observation here is that for both access patterns, the number of capacity misses increase by a large amount as the cache line size increases. This is due to the fact that we have less cache lines as we increase the size of each cache line, meaning that more capacity miss are likely to happen.
 
-![drawing](blockvinter_10access.png)
+The second observation is that for both access patterns, the number of cold misses decrease by a large amount as the cache line size increases. This is because more data can be put into a cache line at once, decreasing the number of cold misses that could happen.
+
+<br>
+
+### Experiment 2
+In our second experiment, we changed our program to contain 10 consecutive access (read and write) to the same position in the array. 
+
+<p align="center">
+<img src="blockvinter_10access.png" width="75%" height="75%" >
+</p>
+<em> <sub> figure 5. Under interleaving data access, nu mber of cold and capacity misses vs. cache line size in fixed cache size </sub> </em>
 
 
 
