@@ -300,6 +300,23 @@ cacheline.
 
 ### Intel Pin Tools
 
+We use a self-modified version of the memory trace tool in pin called `pinatrace`. 
+
+Originally, the tool `pinatrace` is used to record all the read and write instructions that happen between both memory and registers. The output file from `pinatrace` includes the address of the instruction, the address of memory access, and the type of access (write or read). The output trace file of `pinatrace` contains large amounts of information that is not needed in our project, therefore we manipulated the original tool to achieve what we need. 
+
+First, we define two functions, `startroi()` and `stoproi()` as follows:
+
+```
+void startroi(void) {}
+void stoproi(void) {}
+```
+
+In the input program, we insert calls to these two functions around the region of code that we want the pin tool to instrument. In our modified pintool program file, a flag named `isROI` is used. When a routine is found to contain the substring `startroi` in it, `isROI` is set to be `true` indicating the start of the region that we want the pintool to start printing out the trace. When a routine containing substring `stoproi` is encountered, the flag `isROI` is set to be `false`, ending the trace printing. 
+
+Second, we notice that `pinatrace` also prints out the read and write traces between registers, which is the information that we do not need, since data on registers are not using cache. Therefore, we use the pin function `INS_OperandIsReg` to filter out read or write between registers. 
+
+Third, we use the pin function `PIN_GetTid` to obtain the thread id of the current instruction, since this is also the information we need to pass for the later part of our project.
+
 ### Parallelism 
  We use posix thread(pthread) for both the input program and the MSI simulator. The process is just creating different pthreads using `pthread_create` in the beginning and waiting them to join in the end.
 
@@ -346,7 +363,7 @@ How big is the array? What is the intensity of contentions in our program?
 What is the data access pattern? Block or Interleave, or more complex pattern?
 
 ## Experiments Configurations && Graphs
-Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.
+Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cache lines, so the total cache size is 32KB which is close to the real L1 cache configurations.
 
 ### Experiment 1
 For our first experiment with our independent variable, we increment the cache line size by a factor of 2 everytime while keeping the total size of the cache to be fixed, which is 32KB.
@@ -395,6 +412,8 @@ The second observation is that for both access patterns, the number of cold miss
 
 ### Experiment 2
 In our second experiment, we changed our program to contain 10 consecutive access (read and write) to the same position in the array. 
+
+In the following graph, we record the number of coherence misses and flushes for two access patterns with the standard size of cache
 
 <p align="center">
 <img src="blockvinter_10access.png" width="75%" height="75%" >
