@@ -240,16 +240,31 @@ What is the data access pattern? Block or Interleave, or more complex pattern?
 
 # Contribution of Works
 
-50%(Lingxi) - 50%(xwu3)   ? 
+## 50%(Lingxi) - 50%(Xinyu)   ? 
+
+## Lingxi Zhang
+
+- Design and Implement the MSI simulator from the scratch
+- Test the correctness of the simulator following the example from the 418 lecture
+- Debug segfaults and concurrency errors
+- Choose core statistics and come up ways of how to catch these statistics in our simulator 
+
+## Xinyu Wu
+
+- Find out how to convert binary program to read/write trace using Intel Pin
+- Filter out registers related read or write since they are not related to cache
+- Filter out as much memory access, related to library preprocessing/postprocessing, as possible by specifying a region of interest around core program
+- Make the graph and table of statistics
+
+## Together 
+- Come up and benchmark test cases using different variables
+- Find the common trend and source of errors/turbulance among the benchmarking output 
+- Analyze and summarize our discovery  
 
 
-- Bulleted
-- List
 
-1. Numbered
-2. List
 
-**Bold** and _Italic_ and `Code` text
+
 
 [Link](url) and ![Image](src)
 ```
