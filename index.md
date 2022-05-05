@@ -348,7 +348,11 @@ What is the data access pattern? Block or Interleave, or more complex pattern?
 ## Experiments Configurations && Graphs
 Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.
 
-![Image](blockvinter_10access.png)
+![drawing](blockvinter_10access.png){width=50%}
+
+
+
+
 ![Image](coherence_miss_v_diff_thread_number.png)
 ![Image](flush_v_diff_thread_number.png)
 ![Image](x=cache_line_v_coh_flush_block.png)
