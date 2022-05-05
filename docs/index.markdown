@@ -312,7 +312,20 @@ How big is the array? What is the intensity of contentions in our program?
 What is the data access pattern? Block or Interleave, or more complex pattern?
 
 ## Experiments Configurations && Graphs
-Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.  
+Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.
+
+![drawing](blockvinter_10access.png){width=50%}
+
+
+
+
+![Image](coherence_miss_v_diff_thread_number.png)
+![Image](flush_v_diff_thread_number.png)
+![Image](x=cache_line_v_coh_flush_block.png)
+![Image](x=cache_line_v_coh_flush_interleave.png)
+![Image](x=cache_line_v_cold_capacity_block.png)
+![Image](x=cache_line_v_cold_capacity_interleave.png)
+
 ## Analysis 
 
 
@@ -320,6 +333,7 @@ Our main program is to using different thread to access the array element and mo
 
 - Intel Pin User Guide (https://software.intel.com/sites/landingpage/pintool/docs/98547/Pin/html/index.html#MAddressTrace)
 - CMU 15418 Snooping Implementation https://www.cs.cmu.edu/afs/cs/academic/class/15418-s22/www/lectures/12_snoopimpl.pdf
+- 
 
 
 # Contribution of Works
