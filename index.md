@@ -351,10 +351,10 @@ Our main program is to using different thread to access the array element and mo
 ![Image](blockvinter_10access.png)
 ![Image](coherence_miss_v_diff_thread_number.png)
 ![Image](flush_v_diff_thread_number.png)
-![Image](x=cache_line_v_coh:flush_block.png)
-![Image](x=cache_line_v_coh:flush_interleave.png)
-![Image](x=cache_line_v_cold:capacity_block.png)
-![Image](x=cache_line_v_cold:capacity_interleave.png)
+![Image](x=cache_line_v_coh_flush_block.png)
+![Image](x=cache_line_v_coh_flush_interleave.png)
+![Image](x=cache_line_v_cold_capacity_block.png)
+![Image](x=cache_line_v_cold_capacity_interleave.png)
 
 ## Analysis 
 
