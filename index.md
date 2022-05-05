@@ -105,6 +105,123 @@ public:
 };
 ```
 
+## Sample Debug Output
+```
+timestamp : 1  tid : 0 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 2  tid : 1 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Shared   0x10000000
+
+timestamp : 3  tid : 0 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Shared   0x10000000
+
+timestamp : 4  tid : 0 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+coherence miss! by 1
+timestamp : 5  tid : 1 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+coherence miss! by 0
+timestamp : 7  tid : 0 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 8  tid : 0 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+coherence miss! by 1
+timestamp : 6  tid : 1 address : 0x10000000 BusRd  
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 10  tid : 0 address : 0x10000400 BusRd  
+processors : 0
+ Shared   0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 11  tid : 0 address : 0x10000400 BusRdX 
+processors : 0
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+coherence miss! by 1
+timestamp : 9  tid : 1 address : 0x10000000 BusRd  
+processors : 0
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000400
+
+ Shared   0x10000000
+
+timestamp : 12  tid : 1 address : 0x10000400 BusRdX 
+processors : 0
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+-----Processor 0-----
+cold misses : 2
+capacity misses : 0
+coherence misses : 1
+flush : 3
+-----Processor 0-----
+-----Processor 1-----
+cold misses : 2
+capacity misses : 0
+coherence misses : 3
+flush : 1
+-----Processor 1-----
+```
+
+
 
 # Approach
 
@@ -138,6 +255,7 @@ void *thread(void *cur_args) {
 0x4007f0: R 0x602008; TID: 31527
 0x4007f0: W 0x7fff1c83cf88; TID: 31527
 0x4007f6: R 0x602010; TID: 31527
+(Instruction Address) : Read/Write (Memory Address), Thread ID
 ...
 ```
 ### 2. Create Bus and Processors in Separate Threads
@@ -182,8 +300,8 @@ cacheline.
 
 ### Intel Pin Tools
 
-### The Real Parallelism 
- We use posix thread for parallelism.
+### Parallelism 
+ We use posix thread(pthread) for both the input program and the MSI simulator. The process is just creating different pthreads using `pthread_create` in the beginning and waiting them to join in the end.
 
 
 

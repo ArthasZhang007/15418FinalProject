@@ -105,6 +105,89 @@ public:
 };
 ```
 
+## Sample Debug Output
+```
+(...truncated)
+
+coherence miss! by 0
+timestamp : 7  tid : 0 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 8  tid : 0 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+coherence miss! by 1
+timestamp : 6  tid : 1 address : 0x10000000 BusRd  
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 10  tid : 0 address : 0x10000400 BusRd  
+processors : 0
+ Shared   0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 11  tid : 0 address : 0x10000400 BusRdX 
+processors : 0
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+coherence miss! by 1
+timestamp : 9  tid : 1 address : 0x10000000 BusRd  
+processors : 0
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000400
+
+ Shared   0x10000000
+
+timestamp : 12  tid : 1 address : 0x10000400 BusRdX 
+processors : 0
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+processors : 1
+ Modified 0x10000400
+
+ Shared   0x10000000
+
+-----Processor 0-----
+cold misses : 2
+capacity misses : 0
+coherence misses : 1
+flush : 3
+-----Processor 0-----
+-----Processor 1-----
+cold misses : 2
+capacity misses : 0
+coherence misses : 3
+flush : 1
+-----Processor 1-----
+```
+
+
 
 # Approach
 
