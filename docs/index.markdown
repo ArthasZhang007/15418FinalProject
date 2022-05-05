@@ -109,7 +109,7 @@ public:
 # Approach
 
 ## Real Process Overview
-
+![Image](sample.jpg)
 ### 1. Program ==> Trace
 (Interleave access of 64 threads on array length of 256)
 ```
@@ -228,7 +228,7 @@ How big is the array? What is the intensity of contentions in our program?
 What is the data access pattern? Block or Interleave, or more complex pattern?
 
 ## Experiments Configurations && Graphs
-
+Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.  
 ## Analysis 
 
 
@@ -260,21 +260,3 @@ What is the data access pattern? Block or Interleave, or more complex pattern?
 - Come up and benchmark test cases using different variables
 - Find the common trend and source of errors/turbulance among the benchmarking output 
 - Analyze and summarize our discovery  
-
-
-
-
-
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/ArthasZhang007/15418FinalProject/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.

@@ -228,7 +228,7 @@ How big is the array? What is the intensity of contentions in our program?
 What is the data access pattern? Block or Interleave, or more complex pattern?
 
 ## Experiments Configurations && Graphs
-
+Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.  
 ## Analysis 
 
 
