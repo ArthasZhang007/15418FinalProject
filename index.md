@@ -422,11 +422,24 @@ In the following graph, we record the number of coherence misses and flushes for
 
 The first observation is that for interleaving data access, both the number of coherence misses and the number of flushes is greater than those of blocked data access. This is because under interleaving data access pattern, multiple threads could be trying to read from or write to the same cache line interleavingly, meaning that a lot more invalidations and modifying are going on. 
 
-The second observation is that while blocked data access has roughly the equal number of coherence misses and flushes, interleaving data access has way more flushes than coherence misses. This is due to the fact that we count the number of flushes when the state of the cache line is changed from modified to shared or invalid
+The second observation is that while blocked data access has roughly the equal number of coherence misses and flushes, interleaving data access has way more flushes than coherence misses. This is due to the fact that we count it as a flush when the state of the cache line is changed from modified to shared or invalid, and we count it as a coherence miss when the state is changed from invalid to shared or modified. When a processor is trying to read and write to a cache line, all other processors that share this cache line will be invalidated, meaning that the number of invalidations should be greater than the number of modifications happened. 
+
+<br>
+
+### Experiment 3
 
 
-![Image](coherence_miss_v_diff_thread_number.png)
-![Image](flush_v_diff_thread_number.png)
+
+<p align="center">
+<img src="coherence_miss_v_diff_thread_number.png" width="75%" height="75%" >
+</p>
+<em> <sub> figure 6. Under standard 32KB size of cache, number of coherence misses and flushes vs. different data access patterns </sub> </em>
+
+<p align="center">
+<img src="flush_v_diff_thread_number.png" width="75%" height="75%" >
+</p>
+<em> <sub> figure 7. Under standard 32KB size of cache, number of coherence misses and flushes vs. different data access patterns </sub> </em>
+
 
 ## Analysis 
 
