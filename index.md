@@ -413,14 +413,16 @@ The second observation is that for both access patterns, the number of cold miss
 ### Experiment 2
 In our second experiment, we changed our program to contain 10 consecutive access (read and write) to the same position in the array. 
 
-In the following graph, we record the number of coherence misses and flushes for two access patterns with the standard size of cache
+In the following graph, we record the number of coherence misses and flushes for two access patterns with the standard size of cache.
 
 <p align="center">
 <img src="blockvinter_10access.png" width="75%" height="75%" >
 </p>
-<em> <sub> figure 5. Under interleaving data access, nu mber of cold and capacity misses vs. cache line size in fixed cache size </sub> </em>
+<em> <sub> figure 5. Under standard 32KB size of cache, number of coherence misses and flushes vs. different data access patterns </sub> </em>
 
+The first observation is that for interleaving data access, both the number of coherence misses and the number of flushes is greater than those of blocked data access. This is because under interleaving data access pattern, multiple threads could be trying to read from or write to the same cache line interleavingly, meaning that a lot more invalidations and modifying are going on. 
 
+The second observation is that while blocked data access has roughly the equal number of coherence misses and flushes, interleaving data access has way more flushes than coherence misses. This is due to the fact that we count the number of flushes when the state of the cache line is changed from modified to shared or invalid
 
 
 ![Image](coherence_miss_v_diff_thread_number.png)
@@ -433,7 +435,7 @@ In the following graph, we record the number of coherence misses and flushes for
 
 - Intel Pin User Guide (https://software.intel.com/sites/landingpage/pintool/docs/98547/Pin/html/index.html#MAddressTrace)
 - CMU 15418 Snooping Implementation https://www.cs.cmu.edu/afs/cs/academic/class/15418-s22/www/lectures/12_snoopimpl.pdf
-- 
+- Intel Pin Instrumentation Post from StackOverflow https://stackoverflow.com/questions/32026456/how-can-i-specify-an-area-of-code-to-instrument-it-by-pintool/62405749 
 
 
 # Contribution of Works
