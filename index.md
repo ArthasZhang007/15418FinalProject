@@ -437,12 +437,12 @@ In the following two graphs, we record the number of coherence misses and number
 <p align="center">
 <img src="coherence_miss_v_diff_thread_number.png" width="75%" height="75%" >
 </p>
-<em> <sub> figure 6. Under standard 32KB size of cache, number of coherence misses and flushes vs. different data access patterns </sub> </em>
+<em> <sub> figure 6. Under standard 32KB size of cache, number of coherence misses for different data access patterns vs. different number of threads </sub> </em>
 
 <p align="center">
 <img src="flush_v_diff_thread_number.png" width="75%" height="75%" >
 </p>
-<em> <sub> figure 7. Under standard 32KB size of cache, number of coherence misses and flushes vs. different data access patterns </sub> </em>
+<em> <sub> figure 7. Under standard 32KB size of cache, number of flushes for different data access patterns vs. different number of threads  </sub> </em>
 
 The first observation is that for both access patterns, as the number of threads increases, the number of coherences misses and the number of flushes both increase. This is due to the fact that we have more threads that could operate on the same cache line at the same time, causing more invalidations and modifications going on. Note that both the numbers of coherence misses and flushes scale linearly with the number of threads. That is to say, when the number of threads increment by a factor of $n$, the number of coherence misses and the number of flushes both increment by a factor of $n$. 
 
