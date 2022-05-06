@@ -3,7 +3,7 @@
 # project link 
 https://arthaszhang007.github.io/15418FinalProject/
 # project pdf version
-
+see 15418FinalProject.pdf above(github file)
 # project video link
 https://youtu.be/xpwElJJVHAM
 
