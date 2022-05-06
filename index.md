@@ -383,6 +383,10 @@ for (int i = 0; i < arr_size / threadNum; i++){
 }
 ```
 
+Since the results including number of misses in each category could vary for every run of our simulator, when we collect the results for the following experiments, we tried to run the simulator for about five times and take the average of the results.
+
+<br>
+
 ### Experiment 1
 For our first experiment with our independent variable, we increment the cache line size by a factor of 2 everytime while keeping the total size of the cache to be fixed, which is 32KB.
 
