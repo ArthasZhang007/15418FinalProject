@@ -321,9 +321,6 @@ Third, we use the pin function `PIN_GetTid` to obtain the thread id of the curre
  We use posix thread(pthread) for both the input program and the MSI simulator. The process is just creating different pthreads using `pthread_create` in the beginning and waiting them to join in the end.
 
 
-
-
-
 # Results && Analysis
 
 There are so many independent and dependent variables availble for our cache simulator, hence we only selected some of interest.
@@ -364,6 +361,23 @@ What is the data access pattern? Block or Interleave, or more complex pattern?
 
 ## Experiments Configurations && Graphs
 Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cache lines, so the total cache size is 32KB which is close to the real L1 cache configurations.
+
+In both programs, an array of size `arr_size` is created before all the threads are created. Each thread will be accessing some part of `casted->arr` by both reading and writing data. 
+
+The thread function of interleaving data access program is written as the follows, each thread taking care of the data stored separated by a step size of `threadNum`:
+
+```
+for (int i = 0; i < arr_size / threadNum; i++){
+    casted->arr[casted->tid + i * threadNum] += 1;
+}
+```
+
+The thread function of blocked data access program is written as the follows, each thread taking care of the block of continuous data of size of `arr_size / threadNum`:
+```
+for (int i = 0; i < arr_size / threadNum; i++){
+    casted->arr[casted->tid * (arr_size / threadNum) + i] += 1;
+}
+```
 
 ### Experiment 1
 For our first experiment with our independent variable, we increment the cache line size by a factor of 2 everytime while keeping the total size of the cache to be fixed, which is 32KB.
