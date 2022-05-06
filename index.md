@@ -462,13 +462,15 @@ In the following two graphs, we record the number of coherence misses and number
 </p>
 <em> <sub> figure 7. Under standard 32KB size of cache, number of flushes for different data access patterns vs. different number of threads  </sub> </em>
 
-The first observation is that for both access patterns, as the number of threads increases, the number of coherences misses and the number of flushes both increase. This is due to the fact that we have more threads that could operate on the same cache line at the same time, causing more invalidations and modifications going on. Note that both the numbers of coherence misses and flushes scale linearly with the number of threads. That is to say, when the number of threads increment by a factor of $n$, the number of coherence misses and the number of flushes both increment by a factor of $n$. 
+The first observation is that for both access patterns, as the number of threads increases, the number of coherences misses and the number of flushes both increase. This is due to the fact that we have more threads that could operate on the same cache line at the same time, causing more invalidations and modifications going on. Note that both the numbers of coherence misses and flushes **(which is representation of communication intensity) scale almost linearly** with the number of threads, which fits our prediction since the invalidations are broadcast to every other thread in snooping based protocol. That is to say, when the number of threads increment by a factor of $n$, the number of coherence misses and the number of flushes both increment by a factor of $n$. 
 
 The second observation is that while the number of coherence misses is roughly the same for both data access patterns, interleaving access has as much as double the amount of flushes of blocked access. This is due to the fact that much more invalidations are happening in the interleaving access.
 
 # Challenge 
 
 Our MSI simulator is highly parallel just like the real ones, which has an extremely undeterministic nature to debug and reason the correctness. Therefore we have to reference the small example from lecture to test basic sequential consistency and the general trend of different statistics to prove the correctness. 
+
+The underterministic nature also produces turbulent results over the same inputs. We take the mean to alleviate such uncertainty, but only to some extent.
 # Future Work
 
 - Modify this protocol to MESI or MESOI. 
