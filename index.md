@@ -324,7 +324,7 @@ Third, we use the pin function `PIN_GetTid` to obtain the thread id of the curre
 
 
 
-# Results
+# Results && Analysis
 
 There are so many independent and dependent variables availble for our cache simulator, hence we only selected some of interest.
 
@@ -384,7 +384,7 @@ Since the total cache size is fixed, as the cache line size increases, the numbe
 
 The first observation is that as the cache line size increases and the number of cache line decreases, the total number of flushes also decrease. Since the number of cache lines decreases, there are less opportunities for flushes to occur.
 
-The second observation is that although the total number of flushes is decreasing, it is obvious that the first derivation (the speed of decreasing) is decreasing as well. This is due to __________________________________________
+The second observation is that although the total number of flushes is decreasing, it is obvious that the first derivation (the speed of decreasing) is decreasing as well. We hypothesize that this is due to **more false sharing with larger cacheline size**.
 
 The third observation is that under interleaving data access, when the cache line size is small, the number of flushes is almost tripled the amount of number of flushes under blocked data access. Under the interleaving data access pattern, multiple threads could be trying to access (read or write) the same cache line. Therefor the number of flushes for interleaving pattern is much higher than that of blocked pattern. 
 
@@ -448,8 +448,14 @@ The first observation is that for both access patterns, as the number of threads
 
 The second observation is that while the number of coherence misses is roughly the same for both data access patterns, interleaving access has as much as double the amount of flushes of blocked access. This is due to the fact that much more invalidations are happening in the interleaving access.
 
-## Analysis 
+# Challenge 
 
+Our MSI simulator is highly parallel just like the real ones, which has an extremely undeterministic nature to debug and reason the correctness. Therefore we have to reference the small example from lecture to test basic sequential consistency and the general trend of different statistics to prove the correctness. 
+# Future Work
+
+- Modify this protocol to MESI or MESOI. 
+- Identify the percentage of true sharing and false sharing
+- Actually include data transfer for the cacheline
 
 # Reference
 

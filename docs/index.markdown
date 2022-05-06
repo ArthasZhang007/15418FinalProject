@@ -107,7 +107,41 @@ public:
 
 ## Sample Debug Output
 ```
-(...truncated)
+timestamp : 1  tid : 0 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+timestamp : 2  tid : 1 address : 0x10000000 BusRd  
+processors : 0
+ Shared   0x10000000
+
+processors : 1
+ Shared   0x10000000
+
+timestamp : 3  tid : 0 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Shared   0x10000000
+
+timestamp : 4  tid : 0 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
+
+coherence miss! by 1
+timestamp : 5  tid : 1 address : 0x10000000 BusRdX 
+processors : 0
+ Modified 0x10000000
+
+processors : 1
+ Invalid  0x10000000
 
 coherence miss! by 0
 timestamp : 7  tid : 0 address : 0x10000000 BusRd  
@@ -314,17 +348,32 @@ What is the data access pattern? Block or Interleave, or more complex pattern?
 ## Experiments Configurations && Graphs
 Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.
 
-![drawing](blockvinter_10access.png){width=50%}
+<p align="center">
+<img src="x=cache_line_v_coh_flush_block.png" width="75%" height="75%" >
+</p>
+
+
+
+<p align="center">
+<img src="x=cache_line_v_cold_capacity_block.png" width="75%" height="75%" >
+</p>
+
+<p align="center">
+<img src="x=cache_line_v_coh_flush_interleave.png" width="75%" height="75%" >
+</p>
+
+<p align="center">
+<img src="x=cache_line_v_cold_capacity_interleave.png" width="75%" height="75%" >
+</p>
+
+
+![drawing](blockvinter_10access.png)
 
 
 
 
 ![Image](coherence_miss_v_diff_thread_number.png)
 ![Image](flush_v_diff_thread_number.png)
-![Image](x=cache_line_v_coh_flush_block.png)
-![Image](x=cache_line_v_coh_flush_interleave.png)
-![Image](x=cache_line_v_cold_capacity_block.png)
-![Image](x=cache_line_v_cold_capacity_interleave.png)
 
 ## Analysis 
 
