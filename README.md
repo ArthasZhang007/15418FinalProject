@@ -5,7 +5,7 @@ https://arthaszhang007.github.io/15418FinalProject/
 # project pdf version
 
 # project video link
-
+https://youtu.be/xpwElJJVHAM
 
 Lingxi Zhang (lingxiz), Xinyu Wu (xwu3)
 
