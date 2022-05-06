@@ -300,6 +300,23 @@ cacheline.
 
 ### Intel Pin Tools
 
+We use a self-modified version of the memory trace tool in pin called `pinatrace`. 
+
+Originally, the tool `pinatrace` is used to record all the read and write instructions that happen between both memory and registers. The output file from `pinatrace` includes the address of the instruction, the address of memory access, and the type of access (write or read). The output trace file of `pinatrace` contains large amounts of information that is not needed in our project, therefore we manipulated the original tool to achieve what we need. 
+
+First, we define two functions, `startroi()` and `stoproi()` as follows:
+
+```
+void startroi(void) {}
+void stoproi(void) {}
+```
+
+In the input program, we insert calls to these two functions around the region of code that we want the pin tool to instrument. In our modified pintool program file, a flag named `isROI` is used. When a routine is found to contain the substring `startroi` in it, `isROI` is set to be `true` indicating the start of the region that we want the pintool to start printing out the trace. When a routine containing substring `stoproi` is encountered, the flag `isROI` is set to be `false`, ending the trace printing. 
+
+Second, we notice that `pinatrace` also prints out the read and write traces between registers, which is the information that we do not need, since data on registers are not using cache. Therefore, we use the pin function `INS_OperandIsReg` to filter out read or write between registers. 
+
+Third, we use the pin function `PIN_GetTid` to obtain the thread id of the current instruction, since this is also the information we need to pass for the later part of our project.
+
 ### Parallelism 
  We use posix thread(pthread) for both the input program and the MSI simulator. The process is just creating different pthreads using `pthread_create` in the beginning and waiting them to join in the end.
 
@@ -307,7 +324,7 @@ cacheline.
 
 
 
-# Results
+# Results && Analysis
 
 There are so many independent and dependent variables availble for our cache simulator, hence we only selected some of interest.
 
@@ -346,43 +363,105 @@ How big is the array? What is the intensity of contentions in our program?
 What is the data access pattern? Block or Interleave, or more complex pattern?
 
 ## Experiments Configurations && Graphs
-Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cachelines, so the total cache size is 32KB which is close to the real L1 cache configurations.
+Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cache lines, so the total cache size is 32KB which is close to the real L1 cache configurations.
+
+### Experiment 1
+For our first experiment with our independent variable, we increment the cache line size by a factor of 2 everytime while keeping the total size of the cache to be fixed, which is 32KB.
+
+In the following two graphs, we record the changes in number of coherences misses and flushes as we increase the cache line size from 8 bytes to 1024 bytes for two different data access pattern, blocked and interleaving. 
+
+Since the total cache size is fixed, as the cache line size increases, the number of cache lines decrease in correspondence. For example, when the cache line increases from 8 bytes to 16 bytes, the number of cache lines decrease from 4096 to 2048.
 
 <p align="center">
 <img src="x=cache_line_v_coh_flush_block.png" width="75%" height="75%" >
 </p>
-
-
-
-<p align="center">
-<img src="x=cache_line_v_cold_capacity_block.png" width="75%" height="75%" >
-</p>
+<em> <sub> figure 1. Under blocked data access, number of coherence misses and flushes vs. cache line size in fixed cache size </sub> </em>
 
 <p align="center">
 <img src="x=cache_line_v_coh_flush_interleave.png" width="75%" height="75%" >
 </p>
+<em> <sub> figure 2. Under interleaving data access, number of coherence misses and flushes vs. cache line size in fixed cache size </sub> </em>
+
+The first observation is that as the cache line size increases and the number of cache line decreases, the total number of flushes also decrease. Since the number of cache lines decreases, there are less opportunities for flushes to occur.
+
+The second observation is that although the total number of flushes is decreasing, it is obvious that the first derivation (the speed of decreasing) is decreasing as well. We hypothesize that this is due to **more false sharing with larger cacheline size**.
+
+The third observation is that under interleaving data access, when the cache line size is small, the number of flushes is almost tripled the amount of number of flushes under blocked data access. Under the interleaving data access pattern, multiple threads could be trying to access (read or write) the same cache line. Therefor the number of flushes for interleaving pattern is much higher than that of blocked pattern. 
+
+This phenomenon diminishes as the cache line size increases, because now under interleaving pattern, the same thread can access more than one element from the array before invalidation (therefore flushes) happens. 
+
+<br>
+
+In the following two graphs, we record the changes in cold and capacity misses as we increase the cache line size from 8 bytes to 1024 bytes for two different data access pattern, blocked and interleaving.
+
+<p align="center">
+<img src="x=cache_line_v_cold_capacity_block.png" width="75%" height="75%" >
+</p>
+<em> <sub> figure 3. Under blocked data access, number of cold and capacity misses vs. cache line size in fixed cache size </sub> </em>
 
 <p align="center">
 <img src="x=cache_line_v_cold_capacity_interleave.png" width="75%" height="75%" >
 </p>
+<em> <sub> figure 4. Under interleaving data access, number of cold and capacity misses vs. cache line size in fixed cache size </sub> </em>
 
+The first observation here is that for both access patterns, the number of capacity misses increase by a large amount as the cache line size increases. This is due to the fact that we have less cache lines as we increase the size of each cache line, meaning that more capacity miss are likely to happen.
 
-![drawing](blockvinter_10access.png)
+The second observation is that for both access patterns, the number of cold misses decrease by a large amount as the cache line size increases. This is because more data can be put into a cache line at once, decreasing the number of cold misses that could happen.
 
+<br>
 
+### Experiment 2
+In our second experiment, we changed our program to contain 10 consecutive access (read and write) to the same position in the array. 
 
+In the following graph, we record the number of coherence misses and flushes for two access patterns with the standard size of cache.
 
-![Image](coherence_miss_v_diff_thread_number.png)
-![Image](flush_v_diff_thread_number.png)
+<p align="center">
+<img src="blockvinter_10access.png" width="75%" height="75%" >
+</p>
+<em> <sub> figure 5. Under standard 32KB size of cache, number of coherence misses and flushes vs. different data access patterns </sub> </em>
 
-## Analysis 
+The first observation is that for interleaving data access, both the number of coherence misses and the number of flushes is greater than those of blocked data access. This is because under interleaving data access pattern, multiple threads could be trying to read from or write to the same cache line interleavingly, meaning that a lot more invalidations and modifying are going on. 
 
+The second observation is that while blocked data access has roughly the equal number of coherence misses and flushes, interleaving data access has way more flushes than coherence misses. This is due to the fact that we count it as a flush when the state of the cache line is changed from modified to shared or invalid, and we count it as a coherence miss when the state is changed from invalid to shared or modified. When a processor is trying to read and write to a cache line, all other processors that share this cache line will be invalidated, meaning that the number of invalidations should be greater than the number of modifications happened. 
+
+<br>
+
+### Experiment 3
+
+In our third experiment, we changed our testing input program to run on different numbers of threads, including 8, 16, and 64 threads.
+
+In the following two graphs, we record the number of coherence misses and number of flushes for two different data access patterns versus different numbers of threads. 
+
+*See the appendix for the whole data table for different numbers of threads. 
+
+<p align="center">
+<img src="coherence_miss_v_diff_thread_number.png" width="75%" height="75%" >
+</p>
+<em> <sub> figure 6. Under standard 32KB size of cache, number of coherence misses for different data access patterns vs. different number of threads </sub> </em>
+
+<p align="center">
+<img src="flush_v_diff_thread_number.png" width="75%" height="75%" >
+</p>
+<em> <sub> figure 7. Under standard 32KB size of cache, number of flushes for different data access patterns vs. different number of threads  </sub> </em>
+
+The first observation is that for both access patterns, as the number of threads increases, the number of coherences misses and the number of flushes both increase. This is due to the fact that we have more threads that could operate on the same cache line at the same time, causing more invalidations and modifications going on. Note that both the numbers of coherence misses and flushes scale linearly with the number of threads. That is to say, when the number of threads increment by a factor of $n$, the number of coherence misses and the number of flushes both increment by a factor of $n$. 
+
+The second observation is that while the number of coherence misses is roughly the same for both data access patterns, interleaving access has as much as double the amount of flushes of blocked access. This is due to the fact that much more invalidations are happening in the interleaving access.
+
+# Challenge 
+
+Our MSI simulator is highly parallel just like the real ones, which has an extremely undeterministic nature to debug and reason the correctness. Therefore we have to reference the small example from lecture to test basic sequential consistency and the general trend of different statistics to prove the correctness. 
+# Future Work
+
+- Modify this protocol to MESI or MESOI. 
+- Identify the percentage of true sharing and false sharing
+- Actually include data transfer for the cacheline
 
 # Reference
 
 - Intel Pin User Guide (https://software.intel.com/sites/landingpage/pintool/docs/98547/Pin/html/index.html#MAddressTrace)
 - CMU 15418 Snooping Implementation https://www.cs.cmu.edu/afs/cs/academic/class/15418-s22/www/lectures/12_snoopimpl.pdf
-- 
+- Intel Pin Instrumentation Post from StackOverflow https://stackoverflow.com/questions/32026456/how-can-i-specify-an-area-of-code-to-instrument-it-by-pintool/62405749 
 
 
 # Contribution of Works
