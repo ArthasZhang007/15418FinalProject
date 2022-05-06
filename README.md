@@ -1,7 +1,15 @@
 # 15418 Final Project
-It is what it is.
+
+# project link 
+https://arthaszhang007.github.io/15418FinalProject/
+# project pdf version
+
+# project video link
+
 
 Lingxi Zhang (lingxiz), Xinyu Wu (xwu3)
+
+**The following is the project midpost, everything related to the final project is above.**
 
 # Summary
 
