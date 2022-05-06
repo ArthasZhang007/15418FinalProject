@@ -6,6 +6,10 @@ general prediction, which practically shows the correctness of our simulator.
 
 # Background 
 
+<p align="center">
+<img src="cache_image.png" width="75%" height="75%" >
+</p>
+
 In computer architecture, cache coherence is the uniformity of shared resource data that ends up stored in multiple local caches. When clients in a system maintain caches of a common memory resource, problems may arise with incoherent data, especially with CPUs with a multiprocessing system. To ensure the correctness of parallel programs, several memory coherence protocols are implemented. Among all of them the most famous ones are MSI and MESI. Design and implementation detail of the protocol greatly influences the memory usage and speed of the communication system, and in many cases we want to know when and how to choose the right protocol. However, sometimes hardwares are limited, and as students we do not have as much resources. Therefore, a software simulation program may become handy in evaluating the performance and help us choose the correct design.
 
 ## Key Data Structures 
@@ -321,9 +325,6 @@ Third, we use the pin function `PIN_GetTid` to obtain the thread id of the curre
  We use posix thread(pthread) for both the input program and the MSI simulator. The process is just creating different pthreads using `pthread_create` in the beginning and waiting them to join in the end.
 
 
-
-
-
 # Results && Analysis
 
 There are so many independent and dependent variables availble for our cache simulator, hence we only selected some of interest.
@@ -364,6 +365,23 @@ What is the data access pattern? Block or Interleave, or more complex pattern?
 
 ## Experiments Configurations && Graphs
 Our main program is to using different thread to access the array element and modify it. One division is blocking and another division is interleaving. Our default setting is 64 bytes and 512 cache lines, so the total cache size is 32KB which is close to the real L1 cache configurations.
+
+In both programs, an array of size `arr_size` is created before all the threads are created. Each thread will be accessing some part of `casted->arr` by both reading and writing data. 
+
+The thread function of interleaving data access program is written as the follows, each thread taking care of the data stored separated by a step size of `threadNum`:
+
+```
+for (int i = 0; i < arr_size / threadNum; i++){
+    casted->arr[casted->tid + i * threadNum] += 1;
+}
+```
+
+The thread function of blocked data access program is written as the follows, each thread taking care of the block of continuous data of size of `arr_size / threadNum`:
+```
+for (int i = 0; i < arr_size / threadNum; i++){
+    casted->arr[casted->tid * (arr_size / threadNum) + i] += 1;
+}
+```
 
 ### Experiment 1
 For our first experiment with our independent variable, we increment the cache line size by a factor of 2 everytime while keeping the total size of the cache to be fixed, which is 32KB.
@@ -444,13 +462,15 @@ In the following two graphs, we record the number of coherence misses and number
 </p>
 <em> <sub> figure 7. Under standard 32KB size of cache, number of flushes for different data access patterns vs. different number of threads  </sub> </em>
 
-The first observation is that for both access patterns, as the number of threads increases, the number of coherences misses and the number of flushes both increase. This is due to the fact that we have more threads that could operate on the same cache line at the same time, causing more invalidations and modifications going on. Note that both the numbers of coherence misses and flushes scale linearly with the number of threads. That is to say, when the number of threads increment by a factor of $n$, the number of coherence misses and the number of flushes both increment by a factor of $n$. 
+The first observation is that for both access patterns, as the number of threads increases, the number of coherences misses and the number of flushes both increase. This is due to the fact that we have more threads that could operate on the same cache line at the same time, causing more invalidations and modifications going on. Note that both the numbers of coherence misses and flushes **(which is representation of communication intensity) scale almost linearly** with the number of threads, which fits our prediction since the invalidations are broadcast to every other thread in snooping based protocol. That is to say, when the number of threads increment by a factor of $n$, the number of coherence misses and the number of flushes both increment by a factor of $n$. 
 
 The second observation is that while the number of coherence misses is roughly the same for both data access patterns, interleaving access has as much as double the amount of flushes of blocked access. This is due to the fact that much more invalidations are happening in the interleaving access.
 
 # Challenge 
 
 Our MSI simulator is highly parallel just like the real ones, which has an extremely undeterministic nature to debug and reason the correctness. Therefore we have to reference the small example from lecture to test basic sequential consistency and the general trend of different statistics to prove the correctness. 
+
+The underterministic nature also produces turbulent results over the same inputs. We take the mean to alleviate such uncertainty, but only to some extent.
 # Future Work
 
 - Modify this protocol to MESI or MESOI. 
